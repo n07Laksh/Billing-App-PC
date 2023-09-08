@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Dexie from 'dexie'
 
 import { ToastContainer, toast } from 'react-toastify';
@@ -12,7 +12,16 @@ function PurchaseInvoice() {
   const [addedItems, setAddedItems] = useState([]);
   const [total, setTotal] = useState();
   const [grandTotal, setGrandTotal] = useState();
-  const [balance, setBalance] = useState();
+  const [balance, setBalance] = useState(0);
+  const [amount, setAmount] = useState(null);
+  const [isZero, setIsZero] = useState(false);
+  const [discountAmount, setDiscountAmount] = useState(null);
+  const [gstAmount, setGstAmount] = useState(null);
+  const [originalAmount, setOriginalAmount] = useState(0);
+  const [totalOriginalAmount, setTotalOriginalAmount] = useState(0);
+  const [totalOriginalGSTAmount, setTotalGSTOriginalAmount] = useState(0);
+  const [fractionalPart, setFractionalPart] = useState(0);
+
 
   useEffect(() => {
     // Calculate total based on updated addedItems
@@ -21,17 +30,21 @@ function PurchaseInvoice() {
     }, 0);
 
     setTotal(newTotal);
+
     setGrandTotal(newTotal);
 
     tableDiv.current.scrollTop = tableDiv.current.scrollHeight;
+
   }, [addedItems]);
+
+
 
 
   // calculate the paid amount from clent (return or give)
   const checkPaid = (event) => {
-      const val = event.target.value;
+    const val = event.target.value;
 
-      if (val.length) {
+    if (val.length) {
       setBalance(total - val);
     } else {
       setBalance(0)
@@ -42,17 +55,144 @@ function PurchaseInvoice() {
   const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
   const [currentDate, setCurrentDate] = useState(formattedDate);
 
-  const handleDateChange = (event) => {
-    setCurrentDate(event.target.value);
-  };
 
   const [purchaseData, setPurchaseData] = useState({
-    invoiceType: "NoGST", supplierName: "", billNum: "", tag: "", name: "", unit: "KG", quantity: "", salePrice: "", disc: "", gst: "", amount: "", payMode: "", date: currentDate,
+    invoiceType: "NoGST",
+    supplierName: "",
+    billNum: "",
+    tag: "",
+    name: "",
+    unit: "KG",
+    quantity: "",
+    salePrice: "",
+    disc: "",
+    gst: "",
+    amount: "",
+    payMode: "Cash",
+    date: "",
+    today: currentDate,
+    totalDiscount: "",
+    totalGST: "",
   });
+
 
   const tableDiv = useRef(); // table parent div
 
 
+  // calculate discount and auto fill for sale amount
+  useEffect(() => {
+    const itemAmount = purchaseData.quantity * purchaseData.salePrice;
+    if (purchaseData.disc) {
+      const discountedAmt = itemAmount - (itemAmount * purchaseData.disc) / 100;
+      purchaseData.disc == "100" || discountedAmt <= 0 ? setAmount(0) : setAmount(Math.round(discountedAmt));
+      purchaseData.amount = Math.round(discountedAmt);
+      setIsZero(true);
+      setOriginalAmount(Math.round(discountedAmt))
+    } else {
+      setOriginalAmount(itemAmount);
+      setAmount(itemAmount);
+      purchaseData.amount = itemAmount;
+      setIsZero(true);
+    }
+
+  }, [purchaseData.salePrice, purchaseData.quantity, purchaseData.disc,]);
+
+
+  useEffect(() => {
+    // Ensure purchaseData.gst is a valid number
+    const gstPercentage = parseFloat(purchaseData.gst);
+
+    // Check if gstPercentage is a valid number between 0 and 100 (inclusive)
+    if (!isNaN(gstPercentage) && gstPercentage >= 0 && gstPercentage <= 100) {
+      // Calculate the GST amount
+      const gstAmount = (originalAmount * gstPercentage) / 100;
+
+      // Calculate the new total with GST
+      const newAmount = originalAmount + gstAmount;
+
+      // Update purchaseData.amount and the state
+      purchaseData.amount = Math.round(newAmount);
+      setAmount(purchaseData.amount);
+    } else {
+      console.log("Original amount in else block", originalAmount)
+      purchaseData.amount = Math.round(originalAmount);
+      setAmount(originalAmount);
+      // Handle the case where the GST percentage is invalid
+      // You can set purchaseData.amount to its previous value or any other desired behavior
+      console.log("Invalid GST percentage");
+    }
+  }, [purchaseData.gst, originalAmount]);
+
+
+  useEffect(() => {
+    // Ensure purchaseData.totalDiscount is a valid number
+    const discountPercentage = parseFloat(purchaseData.totalDiscount);
+
+    // Check if discountPercentage is a valid number between 1 and 99 (as per your min and max)
+    if (!isNaN(discountPercentage) && discountPercentage >= 0 && discountPercentage <= 100) {
+      const discountAmount = (total * discountPercentage) / 100;
+      setDiscountAmount(discountAmount); // Assuming you have state to store the discount amount
+      const totalDiscounted = total - discountAmount;
+      setGrandTotal(totalDiscounted);
+      setTotalOriginalAmount(totalDiscounted);
+    } else {
+      setTotalOriginalAmount(total)
+      // Handle the case where the discount percentage is invalid
+      setDiscountAmount(0); // Set discount amount to 0
+      setGrandTotal(total); // Set grand total to the original total
+    }
+  }, [purchaseData.totalDiscount]);
+
+
+
+  useEffect(() => {
+    // Ensure purchaseData.totalGST is a valid number
+    const gstPercentage = parseFloat(purchaseData.totalGST);
+
+    if (purchaseData.totalDiscount) {
+      // Check if gstPercentage is a valid number between 0 and 100 (inclusive)
+      if (!isNaN(gstPercentage) && gstPercentage >= 0 && gstPercentage <= 100) {
+        const gstAmount = (totalOriginalAmount * gstPercentage) / 100;
+        setGstAmount(gstAmount); // Assuming you have state to store the GST amount
+        const totalWithGst = totalOriginalAmount + gstAmount;
+
+        setGrandTotal(totalWithGst);
+
+        const fractionalPart = totalWithGst - Math.floor(totalWithGst);
+
+        // Apply Math.round only to the final totalWithGst
+
+        setFractionalPart(fractionalPart);
+      } else {
+        // Handle the case where the GST percentage is invalid
+        setGstAmount(0); // Set GST amount to 0
+        setGrandTotal(totalOriginalAmount); // Set grand total to the original total
+        setFractionalPart(0);
+      }
+    }
+    else {
+      console.log("else block running")
+      // Check if gstPercentage is a valid number between 0 and 100 (inclusive)
+      if (!isNaN(gstPercentage) && gstPercentage >= 0 && gstPercentage <= 100) {
+        const gstAmount = (total * gstPercentage) / 100;
+        setGstAmount(gstAmount); // Assuming you have state to store the GST amount
+        const totalWithGst = total + gstAmount;
+
+        setGrandTotal(totalWithGst);
+
+        const fractionalPart = totalWithGst - Math.floor(totalWithGst);
+
+        // Apply Math.round only to the final totalWithGst
+
+        setFractionalPart(fractionalPart);
+      } else {
+        // Handle the case where the GST percentage is invalid
+        setGstAmount(0); // Set GST amount to 0
+        setGrandTotal(total); // Set grand total to the original total
+        setFractionalPart(0);
+      }
+    }
+  }, [purchaseData.totalGST]);
 
 
 
@@ -63,64 +203,116 @@ function PurchaseInvoice() {
     });
   };
 
-  const addSaleItem = () => {
-    if (purchaseData.name && purchaseData.quantity && purchaseData.salePrice && purchaseData.amount) {
 
+
+  const addSaleItem = () => {
+    if (purchaseData.name && purchaseData.quantity && purchaseData.salePrice && isZero && purchaseData.supplierName) {
       // setAddedItems([...addedItems, purchaseData]);
       setAddedItems(prevAddedItems => [...prevAddedItems, purchaseData]);
-      setPurchaseData({ tag: "", name: "", unit: "KG", quantity: "", salePrice: "", disc: "", gst: "", amount: "" });
+      setPurchaseData({ ...purchaseData, tag: "", name: "", unit: "KG", quantity: "", salePrice: "", disc: "", gst: "", amount: "" });
 
     } else {
       toast.error("require fields are not empty");
     }
   };
 
-  const db = new Dexie('purchaseItems');
+
+
+  const db = new Dexie('purchase');
 
   // Define the schema including the new collection
-  db.version(2).stores({
+  db.version(4).stores({
     // itemData: 'productName', // Existing collection
-    perchaseData: 'billNum', // New collection
+    purchaseData: '++id,billNum,supplierName,date', // New collection
   });
 
+  const storeDB = new Dexie("store");
+  storeDB.version(4).stores({
+    items: "name", // collection with keyPath name and
+  })
+
+  const dailyPurchase = new Dexie('dailyPurchase');
+  dailyPurchase.version(5).stores({
+    purchases: '++id,supplierName', //'++id' is an auto-incremented unique identifier
+  });
+
+
+  //add purchase item in indexeddb
   const savePurchase = async () => {
     if (addedItems.length > 0) {
       const promises = addedItems.map(async item => {
         try {
-          await db.perchaseData.add(item);
-          toast.success('Item added to new collection:', item);
+          await db.purchaseData.add(item);
+          await dailyPurchase.purchases.add(item);
+          try {
+            await storeDB.transaction('rw', storeDB.items, async () => {
+              const existingItem = await storeDB.items.get(item.name);
+              if (existingItem) {
+                // If the item exists, update its quantity by adding the new quantity
+                existingItem.quantity = Number(existingItem.quantity) + Number(item.quantity);
+                existingItem.salePrice = item.salePrice;
+                await storeDB.items.put(existingItem);
+              } else {
+                // If the item doesn't exist, create a new record
+                const storeData = { name: item.name.toLowerCase(), quantity: item.quantity, salePrice: item.salePrice, unit: item.unit };
+                await storeDB.items.put(storeData);
+              }
+            });
+          } catch (error) {
+            console.error('Error updating item quantity:', error);
+          }
+
+          return true; // Resolve promise if added successfully
+
         } catch (error) {
-          toast.error('Error adding item:', error);
+          toast.error('Error adding item: ' + error.message);
+          return false; // Reject promise if error occurred
         }
+
       });
-      await Promise.all(promises);
 
-      setAddedItems([]);
+      const results = await Promise.all(promises);
 
+      if (results.every(result => result)) {
+        // All promises resolved successfully
+        toast.success('Items added to collection');
+        setAddedItems([]);
+      } else {
+        // At least one promise had an error
+        toast.error('Some items could not be added.');
+
+      }
     } else {
-      toast.warn("Add Purchase Details");
+      toast.warn('Add Sale Details');
     }
   };
 
+   // Function to delete an item from addedItems by index
+   const handleDeleteItem = (index) => {
+    const updatedItems = [...addedItems];
+    updatedItems.splice(index, 1); // Remove the item at the specified index
+    setAddedItems(updatedItems); // Update the state to reflect the deleted item
+  };
+
+  
   return (
     <>
-    <ToastContainer
-position="top-center"
-autoClose={2000}
-hideProgressBar={false}
-newestOnTop={false}
-closeOnClick
-rtl={false}
-pauseOnFocusLoss
-draggable
-pauseOnHover
-theme="dark"
-/>
+      <ToastContainer
+        position="top-center"
+        autoClose={2000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
       <div className="sale-content-parentdiv">
 
         <div className="back-div">
           <span className="back" onClick={() => navigate(-1)}>&larr;</span><span className="mx-5 h6">Purchase Item</span>
-          <Link to="/addItem" className="back-div-add-item-sec">Add Items</Link>
         </div>
 
         <div className="mx-4 mt-3 user-info gap-3">
@@ -155,9 +347,9 @@ theme="dark"
             </label>
             <br />
             <input
-              onChange={handleDateChange}
+              onChange={inputChange}
               type="date"
-              value={currentDate}
+              value={purchaseData.date ? purchaseData.date : currentDate}
               name="date"
               className="date"
             // max={currentDate}
@@ -257,7 +449,7 @@ theme="dark"
           </div>
           <div>
             <label className="lable-txt" htmlFor="sale-price">
-             Purchase Price <span className="text-danger">*</span>
+              Purchase Price <span className="text-danger">*</span>
             </label>
             <br />
             <span className="ruppe-div">&#8377; </span>
@@ -298,6 +490,7 @@ theme="dark"
               className="gst"
               name="gst"
               value={purchaseData.gst}
+              disabled={purchaseData.invoiceType === "NoGST"}
             />
           </div>
 
@@ -313,7 +506,7 @@ theme="dark"
               id="amount"
               className="amount"
               name="amount"
-              value={purchaseData.amount}
+              value={amount ? amount : purchaseData.amount}
             />
           </div>
         </div>
@@ -341,9 +534,10 @@ theme="dark"
                 <th scope="col">Qunatity</th>
                 <th scope="col">Unit</th>
                 <th scope="col">Unit Price</th>
-                <th scope="col">Discount</th>
-                <th scope="col">Tax</th>
+                <th scope="col">Discount %</th>
+                <th scope="col">Tax %</th>
                 <th scope="col">Total Amount</th>
+                <th scope="col"> </th>
               </tr>
             </thead>
             <tbody>
@@ -354,9 +548,13 @@ theme="dark"
                   <td>{item.quantity}</td>
                   <td>{item.unit}</td>
                   <td>{item.salePrice}</td>
-                  <td>{item.disc === "" ? "0" : item.disc}</td>
-                  <td>{item.gst === "" ? "0" : item.gst}</td>
+                  <td>{item.disc === "" ? "0" : item.disc} %</td>
+                  <td>{item.gst === "" ? "0" : item.gst} %</td>
                   <td>{item.amount}</td>
+                  <td>
+                    {/* Add the delete button (X) and call handleDeleteItem with the item's index */}
+                    <button className="border border-light bg-danger text-light" onClick={() => handleDeleteItem(index)}>X</button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -377,11 +575,11 @@ theme="dark"
                 name="payMode"
                 value={purchaseData.payMode}
               >
-                <option value="cash">Cash</option>
-                <option value="upi">UPI (Online Payment)</option>
-                <option value="cheque">Cheque</option>
-                <option value="card">Card Payment</option>
-                <option value="bank">Bank Transfer</option>
+                <option value="Cash">Cash</option>
+                <option value="UPI">UPI (Online Payment)</option>
+                <option value="Cheque">Cheque</option>
+                <option value="Card">Card Payment</option>
+                <option value="Bank">Bank Transfer</option>
               </select>
             </div>
             <div>
@@ -394,25 +592,36 @@ theme="dark"
                 <input type="text" name="bal" disabled value={balance} />
               </div>
             </div>
+
+            <div>
+              <input onChange={inputChange} type="number" name="totalDiscount" placeholder="Total Discount %" className="mt-4" />
+              <input onChange={inputChange} type="number" name="totalGST" placeholder="Total GST %" className="mt-2" disabled={purchaseData.invoiceType === "NoGST"} />
+            </div>
+
           </div>
 
           <div className="print-save">
             <div className="sub-total-shelter d-flex justify-content-between">
               <div>Sub-Total</div>
-              <div>{total?total:"0.00"}</div>
+              <div>{total ? total : "0.00"}</div>
             </div>
             <div className="sub-total d-flex justify-content-between">
-              <div> CGST(0%)</div>
-              <div>0.00</div>
+              <div> Total Disc({purchaseData.totalDiscount}%)</div>
+              <div>{discountAmount ? discountAmount : "0.00"}</div>
             </div>
             <div className="sub-total d-flex justify-content-between">
-              <div> SGST(0%)</div>
-              <div>0.00</div>
+              <div> Total GST({purchaseData.totalGST}%)</div>
+              <div>{gstAmount ? Math.round(gstAmount) : "0.00"}</div>
+            </div>
+            <div className="sub-total d-flex justify-content-between">
+              <div> Rounded Price: </div>
+              <div>{fractionalPart.toFixed(1)}</div>
             </div>
             <div className="sub-total-shelter d-flex justify-content-between">
               <div>GRAND TOTAL</div>
-              <div>{grandTotal?grandTotal:"0.00"}</div>
+              <div>{grandTotal ? grandTotal : "0.00"}</div>
             </div>
+
             <button onClick={savePurchase} className="btn btn-sm btn-primary mt-2 w-75">
               Save
             </button>

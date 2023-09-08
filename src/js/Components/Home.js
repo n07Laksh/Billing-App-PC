@@ -1,7 +1,7 @@
 import React from 'react'
 import Balance from './Balance'
 import HomeContent from './HomeContent'
-import UpdateDB from './UpdateDB'
+// import UpdateDB from './UpdateDB'
 
 const Home = (props) => {
   return (
@@ -10,7 +10,7 @@ const Home = (props) => {
     
         <Balance/>
         <HomeContent />
-        <UpdateDB />
+        {/* <UpdateDB /> */}
         </div>
     </>
   )

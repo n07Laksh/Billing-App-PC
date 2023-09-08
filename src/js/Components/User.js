@@ -52,7 +52,7 @@ const User = () => {
 
     <>
         <div className="back-div backdiv-width">
-          <span className="back" onClick={() => navigate(-1)}>&larr;</span><span className="mx-5 h6 back">Profile</span>
+          <span className="back back-n" onClick={() => navigate(-1)}>&larr;</span><span className="mx-5 h6 back">Profile</span>
         </div>
         <div className="d-flex justify-content-center login-update-user-detail">
 

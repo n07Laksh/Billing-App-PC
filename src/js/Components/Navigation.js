@@ -15,15 +15,19 @@ function Dashboard() {
           className="nav-tab "
           to="/saleinvoice"
         >
-          <i className="fa-solid fa-bag-shopping me-2"></i>Sale Invoice
+          <i className="fa-solid fa-bag-shopping me-1"></i> Sale Invoice
         </Link>
 
         <Link to="/purchase" className="nav-tab">
           <i className="fa-solid fa-cart-shopping me-1"></i> Purchase
         </Link>
-        
-        <Link className="nav-tab">
-          <i className="fa-solid fa-store me-1"></i> Stocks
+
+        <Link to="/stock" className="nav-tab">
+          <i className="fa-solid fa-store me-1"></i> Store
+        </Link>
+
+        <Link to="/search" className="nav-tab">
+          <i className="fa-solid fa-search me-1"></i> Search
         </Link>
       </div>
     </div>
