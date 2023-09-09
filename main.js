@@ -30,7 +30,7 @@ function createWindow() {
   //  console.log(ffmpegPath)
 
   win.removeMenu();
-  win.loadFile("file://" + __dirname + "/index.html");
+  win.loadFile("index.html");
   win.webContents.openDevTools();
 }
 
