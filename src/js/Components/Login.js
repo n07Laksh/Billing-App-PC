@@ -31,6 +31,7 @@ const Login = (props) => {
                         localStorage.setItem("user", data.user);
                         // props.showAlert(`User Logged-In Successfully`, "success")
                         // setSpin(false)
+                        localStorage.setItem("userData", JSON.stringify(data.data));
                         props.setLogin(localStorage.getItem("user"));
                         localStorage.setItem('lastLoginTime', new Date().getTime());
                     },500)

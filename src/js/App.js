@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import Home from "./Components/Home";
 import Navbar from "./Components/Navbar";
 import Navigation from "./Components/Navigation";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { HashRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import SaleInvoice from "./Components/SaleInvoice";
 import PurchaseInvoice from "./Components/PurchaseCom";
 import User from './Components/User';
@@ -56,7 +56,7 @@ useEffect(() => {
 
   return (
     <>
-      <Router basename="/C:/Users/user/Projects/electron-exam/">
+      <Router >
 
         <div>
 

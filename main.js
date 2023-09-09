@@ -19,8 +19,18 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js')
     }
   })
+
+   // Specify the path to ffmpeg.dll
+   const ffmpegPath = path.join(__dirname, 'ffmpeg.dll'); // Highlighted line
+
+   // Set the path to ffmpeg for your Electron app
+   win.webContents.setVisualZoomLevelLimits(1, 1);
+   win.webContents.setAudioMuted(true);
+
+  //  console.log(ffmpegPath)
+
   win.removeMenu();
-  win.loadFile('index.html');
+  win.loadFile("file://" + __dirname + "/index.html");
   win.webContents.openDevTools();
 }
 

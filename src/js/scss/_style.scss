@@ -607,3 +607,38 @@ h6.product-heading {
 .login-signup-btn{
   width: 300px;
 }
+
+
+
+
+
+
+
+/* Slideshow container */
+.slideshow-container {
+  max-width: 1000px;
+  max-height: 390px;
+  position: relative;
+  margin: auto;
+  overflow: hidden; /* Ensure the images are contained within the container */
+  display: flex; /* Display slides in a row */
+  transition: transform 0.8s ease;/* Adjust the duration for the sliding effect */
+}
+
+
+/* Individual Slide Content */
+.mySlides {
+  flex: 0 0 100%; /* Set the width of each slide to 100% of the container */
+}
+
+
+.active {
+  background-color: #717171;
+}
+
+/* Image styles */
+.mySlides img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* Adjust how the image is fitted within the container */
+}

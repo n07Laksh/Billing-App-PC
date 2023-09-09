@@ -1,5 +1,6 @@
 import Dexie from 'dexie';
 import React, { useEffect, useState } from 'react'
+import Slideshow from './Slideshow';
 
 
 const HomeContent = () => {
@@ -82,9 +83,9 @@ const HomeContent = () => {
 
         </div>
 
-        <div className="main-content-child main-content-child2">
+        <div className="main-content-child ms-2 main-content-child2">
         
-        child 2
+        <Slideshow />
         
         </div>
       </div>

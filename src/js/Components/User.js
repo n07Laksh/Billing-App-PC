@@ -5,9 +5,10 @@ const User = () => {
     const navigate = useNavigate();
     const [address, setAddress] = useState("");
     const [contact, setContact] = useState("");
+    const [shop, setShop] = useState("");
     const [name, setName] = useState("Name");
-    const [shopName, setShopName] = useState("Shop Name");
     const [email, setEmail] = useState("Email");
+    const [shopName, setShopName] = useState(null);
     const [shopAddress, setShopAddress] = useState(null);
     const [shopContact, setShopContact] = useState(null);
 
@@ -20,7 +21,6 @@ const User = () => {
             const userData = JSON.parse(localStorage.getItem("userData"));
             if(userData){
                 setName(userData.name);
-                setShopName(userData.shopName);
                 setEmail(userData.email)
             }
 
@@ -29,6 +29,7 @@ const User = () => {
             if(userAddCon){
                 setShopContact(userAddCon.contact)
                 setShopAddress(userAddCon.address)
+                setShopName(userAddCon.shopName)
             }
             
         } catch (error) {
@@ -38,11 +39,12 @@ const User = () => {
 
     const handleAdd = () => {
         try {
-    const userDataString = JSON.stringify({address:address, contact:contact});
+    const userDataString = JSON.stringify({address:address, contact:contact, shopName:shop});
 
     localStorage.setItem('userAdd', userDataString);
            setShopAddress(address);
            setShopContact(contact);
+           setShopName(shop);
         } catch (error) {
             console.log(error)
         }
@@ -59,8 +61,8 @@ const User = () => {
             <div className="user-div user-detail-div">
               <div className='user-child-div'>
                 <h5 className="user-name m-4">{name}</h5>
-                <h5 className="shopName m-4">{ shopName }</h5>
                 <h5 className="email m-4">{email}</h5>
+                <h5 className="shopName m-4">{ shopName }</h5>
                 <h5 className="address m-4">{shopAddress}</h5>
                 <h5 className="contact m-4">{shopContact}</h5>
                 </div>
@@ -75,6 +77,11 @@ const User = () => {
                  <div className="form-outline user-n m-4">
                     <label className="form-label" htmlFor="contact">Contact</label>
                      <input type="text" onChange={(e) => setContact(e.target.value)} value={contact} id="contact" className="form-control" />
+                 </div>
+
+                 <div className="form-outline user-n m-4">
+                    <label className="form-label" htmlFor="contact">Shop Name</label>
+                     <input type="text" onChange={(e) => setShop(e.target.value)} value={shop} id="contact" className="form-control" />
                  </div>
 
                  <button onClick={handleAdd} className='btn btn-primary w-50 ms-4'>Add</button>

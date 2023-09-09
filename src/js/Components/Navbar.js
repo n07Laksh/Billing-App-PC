@@ -12,7 +12,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 
 function Navbar() {
-  const [user, setUser] = useState(localStorage.getItem("userDetails")?localStorage.getItem("userDetails"):null);
+  const [user, setUser] = useState(localStorage.getItem("userDetails") ? localStorage.getItem("userDetails") : null);
 
   const [online, setOnline] = useState(navigator.onLine);
 
@@ -153,11 +153,10 @@ function Navbar() {
     }
   }
 
-console.log(user);
 
   return (
     <>
-     <ToastContainer
+      <ToastContainer
         position="top-center"
         autoClose={4000}
         hideProgressBar={false}
@@ -173,7 +172,7 @@ console.log(user);
         <nav className="navbar navbar-expand-lg nav-div bg-body-tertiary ">
           <div className="container-fluid justify-content-end">
             <Link to="/user" className="me-1" ><img style={divStyle} src={userImage} className="userImage" alt="" /></Link>
-            <button onClick={syncData} className={`btn btn-primary btn-sm sync`}>Sync</button>
+            <button onClick={syncData} className={`btn btn-${online?"success":"danger"} btn-sm sync`}>Sync</button>
           </div>
         </nav>
       </div>

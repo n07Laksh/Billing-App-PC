@@ -101,6 +101,7 @@ const Balance = () => {
 
   }, []);
 
+
   return (
     <div className="left-div">
       <div className="balance">
@@ -112,25 +113,7 @@ const Balance = () => {
 
           <div className="today-details">
             <ul className="today-ul">
-              <li className="today-ul-li">
-                Gross Sale
-                <ul className="child-ul-today-detail">
-                  <li className="child-ul-li-today-detail">0</li>
-                </ul>
-              </li>
-
-              <li className="today-ul-li">
-                Amount Recieved
-                <ul className="child-ul-today-detail">
-                  <li className="child-ul-li-today-detail">0</li>
-                </ul>
-              </li>
-              <li className="today-ul-li">
-                Amount Due
-                <ul className="child-ul-today-detail">
-                  <li className="child-ul-li-today-detail">0</li>
-                </ul>
-              </li>
+              
             </ul>
           </div>
         </div>
@@ -142,8 +125,7 @@ const Balance = () => {
           </div>
           <div>
             <ul className="total-ul">
-              <li className="total-ul-li">Previous month total {previousSale}</li>
-              <li className="total-ul-li">second item</li>
+              <li className="total-ul-li">Previous Month Total Sale <span className="text-primary fs-6 fw-bold"> {previousSale} </span></li>
             </ul>
           </div>
         </div>
