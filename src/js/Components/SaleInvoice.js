@@ -115,12 +115,10 @@ function SaleInvoice() {
       saleData.amount = Math.round(newAmount);
       setAmount(saleData.amount);
     } else {
-      console.log("Original amount in else block", originalAmount)
       saleData.amount = Math.round(originalAmount);
       setAmount(originalAmount);
       // Handle the case where the GST percentage is invalid
       // You can set purchaseData.amount to its previous value or any other desired behavior
-      console.log("Invalid GST percentage");
     }
   }, [saleData.gst, originalAmount]);
 
@@ -182,7 +180,6 @@ function SaleInvoice() {
       }
     }
     else {
-      console.log("else block running")
       // Check if gstPercentage is a valid number between 0 and 100 (inclusive)
       if (!isNaN(gstPercentage) && gstPercentage >= 0 && gstPercentage <= 100) {
         const gstAmount = (total * gstPercentage) / 100;
@@ -328,7 +325,6 @@ function SaleInvoice() {
         setAddedItems([]);
       } else {
         // At least one promise had an error
-        console.log("error adding items some item could not be added")
         toast.error('Some items could not be added.');
       }
     } else {

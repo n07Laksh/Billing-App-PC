@@ -31,7 +31,7 @@ const Signup = (props) => {
             if (confirmPassword === password) {
 
                 // signup api fetch
-                let data = await fetch("http://localhost:8000/auth/signup", {
+                let data = await fetch("https://billing-soft-backend-production.up.railway.app/auth/signup", {
                     method: "POST",
                     body: JSON.stringify({ name: name, email: email, password: password }),
                     headers: {
@@ -52,11 +52,9 @@ const Signup = (props) => {
                 setErr(true)
             }
         } catch (error) {
-            // navigate("/404-Error")
-            // dispatch(setPageError());
+            toast.error("Server Not Found : ", error);
         }
     }
-    console.log(password, confirmPassword)
 
     return (
 

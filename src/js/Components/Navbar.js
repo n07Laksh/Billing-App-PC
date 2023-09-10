@@ -66,7 +66,7 @@ function Navbar() {
   // Function to upload data to the Node.js API for Sales
   async function uploadSalesDataToNodeServer(dataToUpload) {
 
-    const apiUrl = "http://localhost:8000/product/saledata"; // Replace with your Sale API endpoint
+    const apiUrl = "https://billing-soft-backend-production.up.railway.app/product/saledata"; // Replace with your Sale API endpoint
 
     try {
       const response = await fetch(apiUrl, {
@@ -90,7 +90,7 @@ function Navbar() {
 
   // Function to upload data to the Node.js API for Purchases (similar logic as Sales)
   async function uploadPurchasesDataToNodeServer(dataToUpload) {
-    const apiUrl = 'http://localhost:8000/product/purchasedata'; // Replace with your Purchases API endpoint
+    const apiUrl = 'https://billing-soft-backend-production.up.railway.app/product/purchasedata'; // Replace with your Purchases API endpoint
 
     try {
       const response = await fetch(apiUrl, {
@@ -148,7 +148,6 @@ function Navbar() {
         toast.error('Error during data synchronization:', error);
       }
     } else {
-      console.log();
       toast.warn('You are offline. Data cannot be synced at the moment.');
     }
   }
