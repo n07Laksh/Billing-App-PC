@@ -12,9 +12,10 @@ import 'react-toastify/dist/ReactToastify.css';
 
 
 function Navbar() {
-  const [user, setUser] = useState(localStorage.getItem("userDetails") ? localStorage.getItem("userDetails") : null);
 
   const [online, setOnline] = useState(navigator.onLine);
+
+  const user = JSON.parse(localStorage.getItem("userData"));
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -32,14 +33,7 @@ function Navbar() {
     border: `2px solid ${online ? "green" : "red"}`,
   };
 
-  useEffect(() => {
-    let a = JSON.parse(localStorage.getItem("userData"));
-    if (a) {
-      setUser(a);
-    }
-  }, []);
-
-  const dailySale = new Dexie('dailySale');
+  const dailySale = new Dexie(`dailySale_${user.name}`);
   dailySale.version(5).stores({
     sales: '++id,clientName', // '++id' is an auto-incremented unique identifier
   });
@@ -165,13 +159,17 @@ function Navbar() {
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme="dark"
+        theme="light"
       />
       <div className="navbar-print-hide">
         <nav className="navbar navbar-expand-lg nav-div bg-body-tertiary ">
-          <div className="container-fluid justify-content-end">
+          
+          <div className="container-fluid justify-content-between">
+          <div className="me-5 text-success"><i className="fa-solid fa-phone me-2"></i> +91-9303432465 || +91-7477055461</div>
+          <div>
             <Link to="/user" className="me-1" ><img style={divStyle} src={userImage} className="userImage" alt="" /></Link>
             <button onClick={syncData} className={`btn btn-${online?"success":"danger"} btn-sm sync`}>Sync</button>
+          </div>
           </div>
         </nav>
       </div>

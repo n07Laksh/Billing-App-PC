@@ -19,7 +19,6 @@ import Signup from './Components/Signup';
 const App = () => {
 
   const user = localStorage.getItem("user");
-  console.log(user)
   const [login, setLogin] = useState(user ? true : false);
 
 useEffect(() => {
@@ -42,16 +41,7 @@ useEffect(() => {
     }
   }
 
-  // // If the user token doesn't exist or it was removed, perform the login process here
-  // if (!localStorage.getItem('user')) {
-  //   // Perform the login process and obtain a new user token
-  //   // const newUserToken = 'your_new_token'; // Replace this with your actual login code
-    
-  //   // Store the new user token and the current login time
-  //   // localStorage.setItem('user', newUserToken);
-  //   localStorage.setItem('lastLoginTime', new Date().getTime());
-  // }
-}, []);
+}, [login]);
 
 
   return (
@@ -79,7 +69,7 @@ useEffect(() => {
                 <Route exact path="*" element={<Home />} />
                 <Route exact path="/saleinvoice" element={<SaleInvoice />} />
                 <Route exact path="/purchase" element={<PurchaseInvoice />} />
-                <Route exact path="/user" element={<User />} />
+                <Route exact path="/user" element={<User setLogin={setLogin} />} />
                 <Route exact path="/search" element={<Search />} />
                 <Route exact path="/stock" element={<Stock />} />
               </Routes>
@@ -90,18 +80,6 @@ useEffect(() => {
         </div>
 
       </Router>
-
-
-
-      {/* <button onClick={() => {
-        // electron.notificationApi.sendNotification('My custom notification!');
-        alert("hello")
-      }}>Notify</button>
-      <button onClick={() => {
-        electron.notificationApi.sendNotification('My custom notification!');
-      }}>Notify</button>
-      <div>{name}</div>
-      <button onClick={()=>{setName(name + 1)}}>Increase</button> */}
     </>
   )
 }

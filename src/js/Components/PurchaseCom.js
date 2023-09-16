@@ -9,6 +9,8 @@ import 'react-toastify/dist/ReactToastify.css';
 function PurchaseInvoice() {
   const navigate = useNavigate();
 
+  const user = JSON.parse(localStorage.getItem("userData"));
+
   const [addedItems, setAddedItems] = useState([]);
   const [total, setTotal] = useState();
   const [grandTotal, setGrandTotal] = useState();
@@ -57,16 +59,16 @@ function PurchaseInvoice() {
 
 
   const [purchaseData, setPurchaseData] = useState({
-    invoiceType: "NoGST",
+    invoiceType: "GST",
     supplierName: "",
     billNum: "",
-    tag: "",
     name: "",
     unit: "KG",
     quantity: "",
+    purchasePrice: "",
     salePrice: "",
     disc: "",
-    gst: "",
+    gst: 18,
     amount: "",
     payMode: "Cash",
     date: "",
@@ -81,7 +83,7 @@ function PurchaseInvoice() {
 
   // calculate discount and auto fill for sale amount
   useEffect(() => {
-    const itemAmount = purchaseData.quantity * purchaseData.salePrice;
+    const itemAmount = purchaseData.quantity * purchaseData.purchasePrice;
     if (purchaseData.disc) {
       const discountedAmt = itemAmount - (itemAmount * purchaseData.disc) / 100;
       purchaseData.disc == "100" || discountedAmt <= 0 ? setAmount(0) : setAmount(Math.round(discountedAmt));
@@ -95,7 +97,7 @@ function PurchaseInvoice() {
       setIsZero(true);
     }
 
-  }, [purchaseData.salePrice, purchaseData.quantity, purchaseData.disc,]);
+  }, [purchaseData.purchasePrice, purchaseData.quantity, purchaseData.disc,]);
 
 
   useEffect(() => {
@@ -194,6 +196,14 @@ function PurchaseInvoice() {
   }, [purchaseData.totalGST]);
 
 
+  const nameSuppHandle = (event) => {
+    const { name, value } = event.target;
+    const lowercaseValue = ['supplierName'].includes(name) ? value.toLowerCase() : value;
+    setPurchaseData((prevData) => ({
+      ...prevData,
+      [name]: lowercaseValue,
+    }));
+  };
 
   const inputChange = (event) => {
     setPurchaseData({
@@ -205,10 +215,10 @@ function PurchaseInvoice() {
 
 
   const addSaleItem = () => {
-    if (purchaseData.name && purchaseData.quantity && purchaseData.salePrice && isZero && purchaseData.supplierName) {
+    if (purchaseData.name && purchaseData.quantity && purchaseData.purchasePrice && isZero && purchaseData.supplierName) {
       // setAddedItems([...addedItems, purchaseData]);
       setAddedItems(prevAddedItems => [...prevAddedItems, purchaseData]);
-      setPurchaseData({ ...purchaseData, tag: "", name: "", unit: "KG", quantity: "", salePrice: "", disc: "", gst: "", amount: "" });
+      setPurchaseData({ ...purchaseData, name: "", unit: "KG", quantity: "", purchasePrice: "", salePrice: "", disc: "", gst: 18, amount: "" });
 
     } else {
       toast.error("require fields are not empty");
@@ -217,7 +227,7 @@ function PurchaseInvoice() {
 
 
 
-  const db = new Dexie('purchase');
+  const db = new Dexie(`purchase_${user.name}`);
 
   // Define the schema including the new collection
   db.version(4).stores({
@@ -225,12 +235,12 @@ function PurchaseInvoice() {
     purchaseData: '++id,billNum,supplierName,date', // New collection
   });
 
-  const storeDB = new Dexie("store");
+  const storeDB = new Dexie(`store_${user.name}`);
   storeDB.version(4).stores({
     items: "name", // collection with keyPath name and
   })
 
-  const dailyPurchase = new Dexie('dailyPurchase');
+  const dailyPurchase = new Dexie(`dailyPurchase_${user.name}`);
   dailyPurchase.version(5).stores({
     purchases: '++id,supplierName', //'++id' is an auto-incremented unique identifier
   });
@@ -249,11 +259,13 @@ function PurchaseInvoice() {
               if (existingItem) {
                 // If the item exists, update its quantity by adding the new quantity
                 existingItem.quantity = Number(existingItem.quantity) + Number(item.quantity);
+                existingItem.purchasePrice = item.purchasePrice;
                 existingItem.salePrice = item.salePrice;
+                existingItem.unit = item.unit;
                 await storeDB.items.put(existingItem);
               } else {
                 // If the item doesn't exist, create a new record
-                const storeData = { name: item.name.toLowerCase(), quantity: item.quantity, salePrice: item.salePrice, unit: item.unit };
+                const storeData = { name: item.name.toLowerCase(), quantity: item.quantity, salePrice: item.salePrice, purchasePrice: item.purchasePrice, unit: item.unit };
                 await storeDB.items.put(storeData);
               }
             });
@@ -286,14 +298,58 @@ function PurchaseInvoice() {
     }
   };
 
-   // Function to delete an item from addedItems by index
-   const handleDeleteItem = (index) => {
+  // Function to delete an item from addedItems by index
+  const handleDeleteItem = (index) => {
     const updatedItems = [...addedItems];
     updatedItems.splice(index, 1); // Remove the item at the specified index
     setAddedItems(updatedItems); // Update the state to reflect the deleted item
   };
 
-  
+
+
+  // auto suggest function 
+  const [store, setStore] = useState([]);
+  const [filteredStore, setFilteredStore] = useState([]);
+
+  useEffect(() => {
+    // Function to get all data from indexeddb store collection
+    async function getStore() {
+      const storeData = await storeDB.items.toArray();
+      storeData.length > 0 ? setStore(storeData) : setStore([]);
+    }
+
+    getStore();
+  }, []);
+
+
+  // Function to filter store based on input value
+  const searchItemName = (value) => {
+    const filteredItems = store.filter((item) =>
+      item.name.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredStore(filteredItems);
+  };
+
+  const nameHandle = (event) => {
+    const { name, value } = event.target;
+    const lowercaseValue = ['name'].includes(name) ? value.toLowerCase() : value;
+
+    setPurchaseData((prevData) => ({
+      ...prevData,
+      [name]: lowercaseValue,
+    }));
+
+    searchItemName(value);
+
+  };
+
+  // Function to handle item selection
+  const handleItemClick = (item) => {
+    setPurchaseData({ ...purchaseData, name: item.name, purchasePrice: item.purchasePrice, salePrice:item.salePrice });
+    setFilteredStore([])
+  };
+
+
   return (
     <>
       <ToastContainer
@@ -306,7 +362,7 @@ function PurchaseInvoice() {
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme="dark"
+        theme="light"
       />
       <div className="sale-content-parentdiv">
 
@@ -327,8 +383,8 @@ function PurchaseInvoice() {
               name="invoiceType"
               value={purchaseData.invoiceType}
             >
-              <option value="no">No GST</option>
-              <option value="gst">GST</option>
+              <option value="NoGST">No GST</option>
+              <option value="GST">GST</option>
             </select>
           </div>
 
@@ -337,7 +393,7 @@ function PurchaseInvoice() {
               Supplier Name<span className="text-danger mx-1">*</span>
             </label>
             <br />
-            <input type="text" name="supplierName" id="supplierName" value={purchaseData.supplierName} onChange={inputChange} />
+            <input type="text" name="supplierName" id="supplierName" value={purchaseData.supplierName} onChange={nameSuppHandle} />
           </div>
 
           <div>
@@ -370,32 +426,28 @@ function PurchaseInvoice() {
 
         <div className="item-section mt-4 mx-4">
           <div>
-            <label className="lable-txt" htmlFor="tag ">
-              Item tag
-            </label>
-            <br />
-            <input
-              onChange={inputChange}
-              type="text"
-              id="tag"
-              className="tag"
-              name="tag"
-              value={purchaseData.tag}
-            />
-          </div>
-          <div>
             <label className="lable-txt" htmlFor="name">
               Name <span className="text-danger">*</span>
             </label>
             <br />
             <input
-              onChange={inputChange}
+              onChange={nameHandle}
               type="text"
               id="name"
               className="name"
               name="name"
               value={purchaseData.name}
             />
+            <div className="result_item">
+              {/* Display the filtered results as a list of names */}
+              <ul className="list-group">
+                {filteredStore.map((item) => (
+                  <li className="list-group-item" key={item.name} onClick={() => handleItemClick(item)}>
+                    {item.name}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
           <div>
             <label className="lable-txt" htmlFor="unit">
@@ -447,8 +499,24 @@ function PurchaseInvoice() {
             />
           </div>
           <div>
-            <label className="lable-txt" htmlFor="sale-price">
+            <label className="lable-txt" htmlFor="purchase-price">
               Purchase Price <span className="text-danger">*</span>
+            </label>
+            <br />
+            <span className="ruppe-div">&#8377; </span>
+            <input
+              onChange={inputChange}
+              type="number"
+              id="purchase-price"
+              className="purchase-price"
+              name="purchasePrice"
+              value={purchaseData.purchasePrice}
+            />
+          </div>
+
+          <div>
+            <label className="lable-txt" htmlFor="sale-price">
+              Sale Price
             </label>
             <br />
             <span className="ruppe-div">&#8377; </span>
@@ -461,6 +529,7 @@ function PurchaseInvoice() {
               value={purchaseData.salePrice}
             />
           </div>
+
           <div>
             <label className="lable-txt" htmlFor="disc">
               Disc %
@@ -529,10 +598,9 @@ function PurchaseInvoice() {
                 <th className="name-head" scope="col">
                   Name
                 </th>
-                <th scope="col">Tag</th>
                 <th scope="col">Qunatity</th>
                 <th scope="col">Unit</th>
-                <th scope="col">Unit Price</th>
+                <th scope="col">Rate</th>
                 <th scope="col">Discount %</th>
                 <th scope="col">Tax %</th>
                 <th scope="col">Total Amount</th>
@@ -543,10 +611,9 @@ function PurchaseInvoice() {
               {addedItems.map((item, index) => (
                 <tr className="position-relative" key={index}>
                   <td>{item.name}</td>
-                  <td>{item.tag === "" ? "__" : item.tag}</td>
                   <td>{item.quantity}</td>
                   <td>{item.unit}</td>
-                  <td>{item.salePrice}</td>
+                  <td>{item.purchasePrice}</td>
                   <td>{item.disc === "" ? "0" : item.disc} %</td>
                   <td>{item.gst === "" ? "0" : item.gst} %</td>
                   <td>{item.amount}</td>

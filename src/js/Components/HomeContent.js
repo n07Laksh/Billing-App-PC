@@ -6,6 +6,8 @@ import Slideshow from './Slideshow';
 const HomeContent = () => {
   const [totalSale, setTotalySale] = useState([]);
 
+  const user = JSON.parse(localStorage.getItem("userData"));
+
   //style for names 
   let nameStyle = {
     fontSize: "0.7rem",
@@ -13,7 +15,7 @@ const HomeContent = () => {
 
 
   // Create Dexie database
-  const saleDB = new Dexie('sale');
+  const saleDB = new Dexie(`sale_${user.name}`);
 
   // Define the schema including the new collection
   saleDB.version(4).stores({
@@ -48,31 +50,31 @@ const HomeContent = () => {
   function calculateDaysPassed(saleDate) {
     const today = new Date();
     const saleDateTime = new Date(saleDate);
-    
+
     const timeDifference = today - saleDateTime;
     const daysPassed = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
-    
-     
-    return daysPassed=="0"?"Today":daysPassed+" day ago";
+
+
+    return daysPassed <= 0 ? "Today" : daysPassed + " day ago";
   }
 
   return (
     <div>
       <div className="main-content">
-      
+
         <div className="main-content-child main-content-child1">
 
-        <div className="history-text p-2">Sale History ...</div>
+          <div className="history-text p-2">Sale History ...</div>
 
           <div className="list-group">
             {
               totalSale.reverse().map((item, index) => (
                 <a key={index} className="list-group-item list-group-item-action mb-3 " aria-current="true">
                   <div className="d-flex w-100 justify-content-between">
-                   <h6 className="mb-1 text-success"> {item.clientName + " | " + item.clientAddress + " | " + item.clientContact}</h6>
+                    <h6 className="mb-1 text-success"> {item.clientName + " | " + item.clientAddress + " | " + item.clientContact}</h6>
                     <small>{calculateDaysPassed(item.today)}</small>
                   </div>
-                  <small ><span style={nameStyle}>Name-</span> <span className="text-danger history-text-size">{item.name},</span> <span style={nameStyle}>Disc-</span> <span className="text-danger history-text-size">{item.disc?item.disc:"0"}%,</span> <span style={nameStyle}>Price-</span> <span className="text-danger history-text-size">{item.amount},</span> <span style={nameStyle}>Date-</span> <span className="text-danger history-text-size">{item.date?item.date:item.today},</span> <span style={nameStyle}>Pay-Mode-</span> <span className="text-danger history-text-size">{item.payMode}</span></small>
+                  <small ><span style={nameStyle}>Name-</span> <span className="text-danger history-text-size">{item.name},</span> <span style={nameStyle}>Disc-</span> <span className="text-danger history-text-size">{item.disc ? item.disc : "0"}%,</span> <span style={nameStyle}>Price-</span> <span className="text-danger history-text-size">{item.amount},</span> <span style={nameStyle}>Date-</span> <span className="text-danger history-text-size">{item.date ? item.date : item.today},</span> <span style={nameStyle}>Pay-Mode-</span> <span className="text-danger history-text-size">{item.payMode}</span></small>
                 </a>
               ))
             }
@@ -84,9 +86,9 @@ const HomeContent = () => {
         </div>
 
         <div className="main-content-child ms-2 main-content-child2">
-        
-        <Slideshow />
-        
+
+          <Slideshow />
+
         </div>
       </div>
     </div>

@@ -25,6 +25,10 @@
   margin: -10px 0 0 30px;
 }
 
+.tts_logo_bg {
+  background: white !important;
+}
+
 .sidenav {
   height: 100%;
   width: 220px;
@@ -253,7 +257,8 @@ input {
   width: 80px;
 }
 
-.sale-price {
+.sale-price,
+.purchase-price {
   width: 80px;
 }
 
@@ -384,7 +389,8 @@ select {
   .item-section,
   .back-div,
   .add-btn,
-  .sale-invoice-footer {
+  .sale-invoice-footer,
+  .sale_invoice_cut_item {
     display: none;
   }
 
@@ -593,18 +599,22 @@ h6.product-heading {
   width: 50%;
   margin-top: 100px;
 }
-.forgot-password-col{
+
+.forgot-password-col {
   text-align: end;
 }
-.forgot-password:hover{
+
+.forgot-password:hover {
   text-decoration: underline;
   color: var(--blue) !important;
 }
-.login-signup-router:hover{
+
+.login-signup-router:hover {
   text-decoration: underline;
-  color:green !important;
+  color: green !important;
 }
-.login-signup-btn{
+
+.login-signup-btn {
   width: 300px;
 }
 
@@ -620,15 +630,19 @@ h6.product-heading {
   max-height: 390px;
   position: relative;
   margin: auto;
-  overflow: hidden; /* Ensure the images are contained within the container */
-  display: flex; /* Display slides in a row */
-  transition: transform 0.8s ease;/* Adjust the duration for the sliding effect */
+  overflow: hidden;
+  /* Ensure the images are contained within the container */
+  display: flex;
+  /* Display slides in a row */
+  transition: transform 0.8s ease;
+  /* Adjust the duration for the sliding effect */
 }
 
 
 /* Individual Slide Content */
 .mySlides {
-  flex: 0 0 100%; /* Set the width of each slide to 100% of the container */
+  flex: 0 0 100%;
+  /* Set the width of each slide to 100% of the container */
 }
 
 
@@ -640,5 +654,46 @@ h6.product-heading {
 .mySlides img {
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain; /* Adjust how the image is fitted within the container */
+  object-fit: contain;
+  /* Adjust how the image is fitted within the container */
+}
+
+
+
+// logout btn 
+.logout:hover {
+  color: green !important;
+  text-decoration: underline;
+}
+
+
+.store_search {
+  width: 200px;
+  outline: none;
+  border: none;
+  font-size: 20px;
+  padding: 10px
+}
+
+.store_searchbtn {
+  line-height: 1;
+  margin-top: -2px;
+  margin-right: 20px;
+}
+
+
+
+
+
+// auto suggest item list style
+.result_item {
+  position: absolute;
+  z-index: 11;
+  width: 200px;
+}
+
+//for spinner div
+.spinner{
+align-items: center;
+margin-top:200px;
 }

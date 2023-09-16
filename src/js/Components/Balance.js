@@ -2,12 +2,15 @@ import React, { useEffect, useState } from "react";
 import Dexie from 'dexie';
 
 const Balance = () => {
+
+  const user = JSON.parse(localStorage.getItem("userData"));
+  
   const [todaySale, setTodaySale] = useState("000")
   const [totalSale, setTotalySale] = useState("000")
   const [previousSale, setPreviousSale] = useState("00")
 
   // Create Dexie database
-  const saleDB = new Dexie('sale');
+  const saleDB = new Dexie(`sale_${user.name}`);
 
   // Define the schema including the new collection
   saleDB.version(4).stores({

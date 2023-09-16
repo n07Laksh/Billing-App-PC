@@ -13,6 +13,8 @@ import 'react-toastify/dist/ReactToastify.css';
 function SaleInvoice() {
   const navigate = useNavigate();
 
+  const user = JSON.parse(localStorage.getItem("userData"));
+
   const [addedItems, setAddedItems] = useState([]);
   const [total, setTotal] = useState();
   const [grandTotal, setGrandTotal] = useState();
@@ -54,18 +56,17 @@ function SaleInvoice() {
   const [currentDate, setCurrentDate] = useState(formattedDate);
 
   const [saleData, setSaleData] = useState({
-    invoiceType: "NoGST",
+    invoiceType: "GST",
     invoiceNum: "",
     clientName: "",
     clientContact: "",
     clientAddress: "",
-    tag: "",
     name: "",
     unit: "KG",
     quantity: "",
     salePrice: "",
     disc: "",
-    gst: "",
+    gst: 18,
     amount: "",
     payMode: "Cash",
     date: "",
@@ -122,6 +123,15 @@ function SaleInvoice() {
     }
   }, [saleData.gst, originalAmount]);
 
+
+  const nameSuppHandle = (event) => {
+    const { name, value } = event.target;
+    const lowercaseValue = ['clientName'].includes(name) ? value.toLowerCase() : value;
+    setSaleData((prevData) => ({
+      ...prevData,
+      [name]: lowercaseValue,
+    }));
+  };
 
   const inputChange = (event) => {
     setSaleData({
@@ -208,7 +218,7 @@ function SaleInvoice() {
     if (saleData.name && saleData.quantity && saleData.salePrice && isZero && saleData.clientName) {
 
       setAddedItems(prevAddedItems => [...prevAddedItems, saleData]);
-      setSaleData({ ...saleData, tag: "", name: "", unit: "KG", quantity: "", salePrice: "", disc: "", gst: "", amount: "" });
+      setSaleData({ ...saleData, name: "", unit: "KG", quantity: "", salePrice: "", disc: "", gst: "18", amount: "" });
     } else {
       toast.error("require fields are not empty");
     }
@@ -216,7 +226,7 @@ function SaleInvoice() {
 
 
 
-  const db = new Dexie('sale');
+  const db = new Dexie(`sale_${user.name}`);
 
   // Define the schema including the new collection
 
@@ -224,12 +234,12 @@ function SaleInvoice() {
     saleItems: '++id,today,clientName,date', // New collection
   });
 
-  const storeDB = new Dexie("store");
+  const storeDB = new Dexie(`store_${user.name}`);
   storeDB.version(4).stores({
     items: "name", // collection with keyPath name and
   })
 
-  const dailySale = new Dexie('dailySale');
+  const dailySale = new Dexie(`dailySale_${user.name}`);
   dailySale.version(5).stores({
     sales: '++id,clientName', //'++id' is an auto-incremented unique identifier
   });
@@ -286,7 +296,7 @@ function SaleInvoice() {
           const existingItem = await storeDB.items.get(itemName);
           const existingQuantity = parseFloat(existingItem?.quantity) || 0;
           const soldQuantity = parseFloat(item.quantity);
-  
+
           if (existingQuantity > 0) {
             if (existingQuantity >= soldQuantity) {
               // Deduct the sold quantity from the store's quantity
@@ -294,7 +304,7 @@ function SaleInvoice() {
               await storeDB.transaction('rw', storeDB.items, async () => {
                 await storeDB.items.put(existingItem);
               });
-  
+
               // Add the item to the saleDB
               await db.saleItems.add(item);
               await dailySale.sales.add(item);
@@ -306,23 +316,26 @@ function SaleInvoice() {
             toast.error(`Item ${itemName} has an empty quantity in the store.`);
             return false; // Reject promise if item has empty quantity
           }
-          
+
           return true; // Resolve promise if added successfully
         } catch (error) {
           toast.error('Error adding item:', error);
           return false; // Reject promise if error occurred
         }
       });
-  
+
       const results = await Promise.all(promises);
-  
+
       if (results.every((result) => result)) {
         // All promises resolved successfully, now call handleSale with the array of sold items
         handleSale(addedItems);
-  
+
         window.print();
         toast.success('Items added to collection');
         setAddedItems([]);
+        setFractionalPart(0)
+        setDiscountAmount(null)
+        setGstAmount(null)
       } else {
         // At least one promise had an error
         toast.error('Some items could not be added.');
@@ -343,6 +356,49 @@ function SaleInvoice() {
 
 
 
+// auto suggest function 
+const [store, setStore] = useState([]);
+const [filteredStore, setFilteredStore] = useState([]);
+
+useEffect(() => {
+  // Function to get all data from indexeddb store collection
+  async function getStore() {
+    const storeData = await storeDB.items.toArray();
+    storeData.length > 0 ? setStore(storeData) : setStore([]);
+  }
+
+  getStore();
+}, []);
+
+
+// Function to filter store based on input value
+const searchItemName = (value) => {
+  const filteredItems = store.filter((item) =>
+    item.name.toLowerCase().includes(value.toLowerCase())
+  );
+  setFilteredStore(filteredItems);
+};
+
+const nameHandle = (event) => {
+  const { name, value } = event.target;
+  const lowercaseValue = ['name'].includes(name) ? value.toLowerCase() : value;
+
+  setSaleData((prevData) => ({
+    ...prevData,
+    [name]: lowercaseValue,
+  }));
+
+  searchItemName(value);
+
+};
+
+// Function to handle item selection
+const handleItemClick = (item) => {
+  setSaleData({ ...saleData, name: item.name, salePrice:item.salePrice, unit:item.unit });
+  setFilteredStore([])
+};
+
+
   return (
     <>
       <ToastContainer
@@ -355,12 +411,15 @@ function SaleInvoice() {
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme="dark"
+        theme="light"
       />
       <div className="sale-content-parentdiv">
         <div className="print-show">
+          <div className="invoice text-center">
+            <h4 className="text-center mb-3">Invoice</h4>
+          </div>
           <div className="d-flex justify-content-start gap-5">
-            <ShopDetails items={addedItems} />
+            <ShopDetails />
             <CustomerDetails saleData={saleData} />
           </div>
         </div>
@@ -399,7 +458,7 @@ function SaleInvoice() {
               Client Name<span className="text-danger mx-1">*</span>
             </label>
             <br />
-            <input type="text" name="clientName" id="clientName" value={saleData.clientName} onChange={inputChange} />
+            <input type="text" name="clientName" id="clientName" value={saleData.clientName} onChange={nameSuppHandle} />
           </div>
 
           <div>
@@ -422,33 +481,30 @@ function SaleInvoice() {
         </div>
 
         <div className="item-section mt-4 mx-4">
-          <div>
-            <label className="lable-txt" htmlFor="tag ">
-              Item tag
-            </label>
-            <br />
-            <input
-              onChange={inputChange}
-              type="text"
-              id="tag"
-              className="tag"
-              name="tag"
-              value={saleData.tag}
-            />
-          </div>
+          
           <div>
             <label className="lable-txt" htmlFor="name">
               Name <span className="text-danger">*</span>
             </label>
             <br />
             <input
-              onChange={inputChange}
+              onChange={nameHandle}
               type="text"
               id="name"
               className="name"
               name="name"
               value={saleData.name}
             />
+             <div className="result_item">
+              {/* Display the filtered results as a list of names */}
+              <ul className="list-group">
+                {filteredStore.map((item) => (
+                  <li className="list-group-item" key={item.name} onClick={() => handleItemClick(item)}>
+                    {item.name}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
           <div>
             <label className="lable-txt" htmlFor="unit">
@@ -577,10 +633,9 @@ function SaleInvoice() {
                 <th className="name-head" scope="col">
                   Name
                 </th>
-                <th scope="col">Tag</th>
                 <th scope="col">Qunatity</th>
                 <th scope="col">Unit</th>
-                <th scope="col">Unit Price</th>
+                <th scope="col">Rate</th>
                 <th scope="col">Discount %</th>
                 <th scope="col">Tax %</th>
                 <th scope="col">Total Amount</th>
@@ -591,7 +646,6 @@ function SaleInvoice() {
               {addedItems.map((item, index) => (
                 <tr className="position-relative" key={index}>
                   <td>{item.name}</td>
-                  <td>{item.tag === "" ? "__" : item.tag}</td>
                   <td>{item.quantity}</td>
                   <td>{item.unit}</td>
                   <td>{item.salePrice}</td>
@@ -600,7 +654,7 @@ function SaleInvoice() {
                   <td>{item.amount}</td>
                   <td>
                     {/* Add the delete button (X) and call handleDeleteItem with the item's index */}
-                    <button className="border border-light bg-danger text-light" onClick={() => handleDeleteItem(index)}>X</button>
+                    <button className="border border-light bg-danger text-light sale_invoice_cut_item" onClick={() => handleDeleteItem(index)}>X</button>
                   </td>
                 </tr>
               ))}
@@ -653,8 +707,8 @@ function SaleInvoice() {
               </div>
             </div>
             <div>
-              <input onChange={inputChange} type="number" name="totalDiscount" placeholder="Total Discount %" className="mt-4 sale-bottom-discount-pannel" />
-              <input onChange={inputChange} type="number" name="totalGST" placeholder="Total GST %" className="mt-2 sale-bottom-discount-pannel" disabled={saleData.invoiceType === "NoGST"} />
+              <input onChange={inputChange} value={saleData.totalDiscount} type="number" name="totalDiscount" placeholder="Total Discount %" className="mt-4 sale-bottom-discount-pannel" />
+              <input onChange={inputChange} value={saleData.totalGST} type="number" name="totalGST" placeholder="Total GST %" className="mt-2 sale-bottom-discount-pannel" disabled={saleData.invoiceType === "NoGST"} />
             </div>
           </div>
 
@@ -688,7 +742,7 @@ function SaleInvoice() {
         </div>
 
         <div className="sale-details m-4">
-          <SaleDetails total={total} grandTotal={grandTotal} />
+          <SaleDetails total={total} discountAmount={discountAmount} gstAmount={gstAmount} fractionalPart={fractionalPart.toFixed(1)} grandTotal={grandTotal} />
         </div>
 
       </div>
