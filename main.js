@@ -12,6 +12,7 @@ function createWindow() {
     height: height,
     maximizable: false,
     resizable: false,
+    icon:"./src/js/images/ttslogocrop.jpg",
     webPreferences: {
       // nodeIntegration: false,
       nodeIntegration: true,
@@ -22,15 +23,7 @@ function createWindow() {
     }
   })
 
-   // Specify the path to ffmpeg.dll
-   const ffmpegPath = path.join(__dirname, 'ffmpeg.dll'); // Highlighted line
-
-   // Set the path to ffmpeg for your Electron app
-   win.webContents.setVisualZoomLevelLimits(1, 1);
-   win.webContents.setAudioMuted(true);
-
-  //  console.log(ffmpegPath)
-
+  win.setTitle('Tribe Vyapar Solutions');
   win.removeMenu();
   win.loadFile("index.html");
   win.webContents.openDevTools();

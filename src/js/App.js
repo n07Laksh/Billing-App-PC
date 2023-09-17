@@ -41,7 +41,7 @@ useEffect(() => {
     }
   }
 
-}, [login]);
+}, [login,user]);
 
 
   return (
