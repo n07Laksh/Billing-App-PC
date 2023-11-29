@@ -146,6 +146,14 @@ function Navbar() {
     }
   }
 
+  const [imagePreview, setImagePreview] = useState(userImage);
+
+  useEffect(() => {
+      const savedImage = localStorage.getItem(`profilePicture_${user.name}`);
+      if (savedImage) {
+          setImagePreview(savedImage);
+      }
+  }, [localStorage.getItem(`profilePicture_${user.name}`)]);
 
   return (
     <>
@@ -167,7 +175,7 @@ function Navbar() {
           <div className="container-fluid justify-content-between">
           <div className="me-5 text-success"><i className="fa-solid fa-phone me-2"></i> +91-9303432465 || +91-7477055461</div>
           <div>
-            <Link to="/user" className="me-1" ><img style={divStyle} src={userImage} className="userImage" alt="" /></Link>
+            <Link to="/user" className="me-1" ><img style={divStyle} src={imagePreview} className="userImage" alt="" /></Link>
             <button onClick={syncData} className={`btn btn-${online?"success":"danger"} btn-sm sync`}>Sync</button>
           </div>
           </div>

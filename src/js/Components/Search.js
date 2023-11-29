@@ -102,7 +102,8 @@ const Search = () => {
             if (searchMethod === "online") {
                 setSpin(true)
                 // Create a URL with query parameters
-                const url = "https://billing-soft-backend-production.up.railway.app/product/searchsale"
+                // const url = "https://billing-soft-backend-production.up.railway.app/product/searchsale";
+                const url = "http://localhost:8000/product/searchsale";
 
                 let data = await fetch(url, {
                     method: "POST",
@@ -122,7 +123,7 @@ const Search = () => {
                 // Search sale items
                 const saleSearchResults = await searchItemsInDB(searchData.text, searchTypeKeyPath, saleDB.saleItems, searchData.firstDate, searchData.lastDate);
                 if (saleSearchResults.length == 0) {
-                    toast.error("Use The Correct Value");
+                    toast.error("No match found try with another keyword");
                     setSpin(false)
                     return;
                 }
@@ -163,7 +164,7 @@ const Search = () => {
                 // Search purchase items
                 const purchaseSearchResults = await searchItemsInDB(searchData.text, searchTypeKeyPath, purchaseDB.purchaseData, searchData.firstDate, searchData.lastDate);
                 if (purchaseSearchResults.length == "0") {
-                    toast.error("Use The Correct Value");
+                    toast.error("No match found try with another keyword");
                     setSpin(false)
                     return;
                 }
@@ -182,8 +183,6 @@ const Search = () => {
 
         const timeDifference = today - saleDateTime;
         const daysPassed = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
-
-
 
         return daysPassed == "0" ? "Today" : daysPassed + " day ago";
     }
@@ -292,17 +291,20 @@ const Search = () => {
 
                     <div>
                         <input onChange={inputChange} className='searchinput p-2' type="search" name="text" id="search" placeholder=' ex. Name, Client Name, Supplier Name, Bill Number' disabled={searchTypeKeyPath === "date"} />
-                        <input disabled={searchTypeKeyPath !== "date"} onChange={inputChange} value={searchData.firstDate ? searchData.firstDate : formattedDate} className='searchinput-date p-2 mx-2 mt-1' type="date" name="firstDate" id="firstDate" /> To
-                        <input disabled={searchTypeKeyPath !== "date"} onChange={inputChange} value={searchData.lastDate ? searchData.lastDate : formattedDate} className='searchinput-date p-2 ms-3 mt-1' type="date" name="lastDate" id="lastDate" />
-                        <button className='btn btn-primary btn-sm searchinput-date ms-3 mt-1' type="submit"><i className='fa-solid fa-search'></i> Search </button>
+                        <div style={{display:"flex",justifyContent:"space-around", alignItems:"center",gap: "6px", marginTop:"5px", width:"100%"}}>
+                            <input disabled={searchTypeKeyPath !== "date"} onChange={inputChange} value={searchData.firstDate ? searchData.firstDate : formattedDate} className='searchinput-date' type="date" name="firstDate" id="firstDate" />
+                            <div>to</div>
+                            <input disabled={searchTypeKeyPath !== "date"} onChange={inputChange} value={searchData.lastDate ? searchData.lastDate : formattedDate} className='searchinput-date ' type="date" name="lastDate" id="lastDate" />
+                            <button className='btn btn-primary btn-sm searchinput-date' type="submit"><i className='fa-solid fa-search'></i> Search </button>
+                        </div>
                     </div>
 
                 </form>
             </div>
 
-            <div className="search-data mt-4">
+            <div className="search-data">
 
-                <div className="list-group scrollable-div">
+                <div className="list-group scrollable-div mt-3">
                     {
                         data ? (
                             data.map((item, index) => (

@@ -6,9 +6,7 @@ const os = require('os');
 import Spinner from './Spinner'
 
 import { ToastContainer, toast } from 'react-toastify';
-
 import 'react-toastify/dist/ReactToastify.css';
-
 
 const Login = (props) => {
     const [email, setEmail] = useState("");
@@ -21,10 +19,11 @@ const Login = (props) => {
 
     const handleLogin = async () => {
         try {
-            if (email !== "" && password !== "") {
+            if (email !== "" && password !== "" && password.length >= 6) {
                 setSpin(true);
 
-                let data = await fetch("https://billing-soft-backend-production.up.railway.app/auth/login", {
+                // let data = await fetch("https://billing-soft-backend-production.up.railway.app/auth/login", {
+                let data = await fetch("http://localhost:8001/auth/login", {
                     method: "POST",
                     body: JSON.stringify({ email: email, password: password, deviceName: deviceName, devicePlatform: platform, deviceType: osName }),
                     headers: {
@@ -33,27 +32,23 @@ const Login = (props) => {
                 });
                 data = await data.json();
                 if (!data.error) {
-
                     localStorage.setItem("user", data.user);
                     localStorage.setItem("userData", JSON.stringify(data.data));
                     props.setLogin(localStorage.getItem("user"));
                     localStorage.setItem('lastLoginTime', new Date().getTime());
                     setSpin(false)
-
                 }
                 else {
                     toast.error(data.message);
                     setSpin(false)
                 }
             }
-
             else {
-                toast.warn("All field Are Required");
+                toast.warn("Use Correct UserId & Passwords");
                 setSpin(false)
             }
-
         } catch (error) {
-            toast.error("Server Not Found : ", error);
+            toast.error("Some Error Accured Try Again");
             setSpin(false)
         }
     }

@@ -1,5 +1,5 @@
 {
-  "name": "electron-exam",
+  "name": "Tribe_Billing_Solutions",
   "version": "1.0.0",
   "description": "",
   "main": "main.js",
@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "watch": "webpack --config webpack.common.js --watch",
     "start": "nodemon --exec electron .",
-    "build": "electron-packager . electron-exam --platform=win32 --arch=x64 --out=dist --overwrite"
+    "build": "electron-packager . Tribe_Billing_Solutions --platform=win32 --arch=x64 --out=dist --overwrite"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +19,7 @@
     "bootstrap": "^5.3.1",
     "dexie": "^3.2.4",
     "indexeddb": "^0.0.0",
+    "netlify-lambda": "^2.0.16",
     "node-fetch": "^3.3.2",
     "postcss": "^8.4.28",
     "postcss-loader": "^7.3.3",
@@ -27,7 +28,8 @@
     "react-router-dom": "^6.15.0",
     "react-toastify": "^9.1.3",
     "sass": "^1.66.1",
-    "sass-loader": "^10.1.1"
+    "sass-loader": "^10.1.1",
+    "serverless-http": "^3.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.22.11",
@@ -45,5 +47,4 @@
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^4.15.1"
   }
-  
 }

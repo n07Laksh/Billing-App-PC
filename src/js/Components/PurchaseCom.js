@@ -15,7 +15,7 @@ function PurchaseInvoice() {
   const [total, setTotal] = useState();
   const [grandTotal, setGrandTotal] = useState();
   const [balance, setBalance] = useState(0);
-  const [amount, setAmount] = useState(null);
+  const [amount, setAmount] = useState(0);
   const [isZero, setIsZero] = useState(false);
   const [discountAmount, setDiscountAmount] = useState(null);
   const [gstAmount, setGstAmount] = useState(null);
@@ -37,7 +37,7 @@ function PurchaseInvoice() {
 
     tableDiv.current.scrollTop = tableDiv.current.scrollHeight;
 
-  }, [addedItems]);
+  }, [addedItems,]);
 
 
 
@@ -77,7 +77,6 @@ function PurchaseInvoice() {
     totalGST: "",
   });
 
-
   const tableDiv = useRef(); // table parent div
 
 
@@ -92,38 +91,33 @@ function PurchaseInvoice() {
       setOriginalAmount(Math.round(discountedAmt))
     } else {
       setOriginalAmount(itemAmount);
-      setAmount(itemAmount);
+      setAmount(itemAmount)
       purchaseData.amount = itemAmount;
       setIsZero(true);
     }
-
-  }, [purchaseData.purchasePrice, purchaseData.quantity, purchaseData.disc,]);
+  }, [purchaseData.purchasePrice, purchaseData.quantity, purchaseData.disc, purchaseData.invoiceType]);
 
 
   useEffect(() => {
     // Ensure purchaseData.gst is a valid number
     const gstPercentage = parseFloat(purchaseData.gst);
+    if (purchaseData.invoiceType === "GST") {
 
-    // Check if gstPercentage is a valid number between 0 and 100 (inclusive)
-    if (!isNaN(gstPercentage) && gstPercentage >= 0 && gstPercentage <= 100) {
-      // Calculate the GST amount
-      const gstAmount = (originalAmount * gstPercentage) / 100;
+      if (!isNaN(gstPercentage) && gstPercentage >= 0 && gstPercentage <= 100) {
+        const gstAmount = (originalAmount * gstPercentage) / 100;
+        const newAmount = originalAmount + gstAmount;
 
-      // Calculate the new total with GST
-      const newAmount = originalAmount + gstAmount;
-
-      // Update purchaseData.amount and the state
-      purchaseData.amount = Math.round(newAmount);
-      setAmount(purchaseData.amount);
+        // Update purchaseData.amount and the state
+        purchaseData.amount = Math.round(newAmount);
+        setAmount(newAmount)
+      } else {
+        setAmount(originalAmount)
+        purchaseData.amount = Math.round(originalAmount);
+      }
     } else {
-
-      purchaseData.amount = Math.round(originalAmount);
-      setAmount(originalAmount);
-      // Handle the case where the GST percentage is invalid
-      // You can set purchaseData.amount to its previous value or any other desired behavior
-
+      purchaseData.gst = 0;
     }
-  }, [purchaseData.gst, originalAmount]);
+  }, [purchaseData.gst, originalAmount, purchaseData.invoiceType]);
 
 
   useEffect(() => {
@@ -222,7 +216,7 @@ function PurchaseInvoice() {
 
     } else {
       toast.error("require fields are not empty");
-    }
+    }console
   };
 
 
@@ -231,8 +225,7 @@ function PurchaseInvoice() {
 
   // Define the schema including the new collection
   db.version(4).stores({
-    // itemData: 'productName', // Existing collection
-    purchaseData: '++id,billNum,supplierName,date', // New collection
+    purchaseData: '++id,billNum,today,supplierName,date', // New collection
   });
 
   const storeDB = new Dexie(`store_${user.name}`);
@@ -242,7 +235,7 @@ function PurchaseInvoice() {
 
   const dailyPurchase = new Dexie(`dailyPurchase_${user.name}`);
   dailyPurchase.version(5).stores({
-    purchases: '++id,supplierName', //'++id' is an auto-incremented unique identifier
+    purchases: '++id,today,supplierName', //'++id' is an auto-incremented unique identifier
   });
 
 
@@ -270,7 +263,7 @@ function PurchaseInvoice() {
               }
             });
           } catch (error) {
-            console.error('Error updating item quantity:', error);
+            toast.error('Error updating item quantity:', error);
           }
 
           return true; // Resolve promise if added successfully
@@ -345,7 +338,7 @@ function PurchaseInvoice() {
 
   // Function to handle item selection
   const handleItemClick = (item) => {
-    setPurchaseData({ ...purchaseData, name: item.name, purchasePrice: item.purchasePrice, salePrice:item.salePrice });
+    setPurchaseData({ ...purchaseData, name: item.name, purchasePrice: item.purchasePrice, salePrice: item.salePrice });
     setFilteredStore([])
   };
 
@@ -364,7 +357,7 @@ function PurchaseInvoice() {
         pauseOnHover
         theme="light"
       />
-      <div className="sale-content-parentdiv">
+      <div className="sale-content-parentdiv p-3">
 
         <div className="back-div">
           <span className="back" onClick={() => navigate(-1)}>&larr;</span><span className="mx-5 h6">Purchase Item</span>
@@ -574,7 +567,7 @@ function PurchaseInvoice() {
               id="amount"
               className="amount"
               name="amount"
-              value={amount ? amount : purchaseData.amount}
+              value={ amount?amount:purchaseData.amount }
             />
           </div>
         </div>

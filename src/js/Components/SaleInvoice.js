@@ -26,6 +26,8 @@ function SaleInvoice() {
   const [gstAmount, setGstAmount] = useState(null);
   const [totalOriginalAmount, setTotalOriginalAmount] = useState(0);
   const [fractionalPart, setFractionalPart] = useState(0);
+  const [soldQuantitie, setSoldQuantitie] = useState({});
+
 
   useEffect(() => {
     // Calculate total based on updated addedItems
@@ -95,33 +97,30 @@ function SaleInvoice() {
       saleData.amount = itemAmount;
       setIsZero(true);
     }
-
-
-  }, [saleData.salePrice, saleData.quantity, saleData.disc]);
+  }, [saleData.salePrice, saleData.quantity, saleData.disc, saleData.invoiceType]);
 
 
   useEffect(() => {
-    // Ensure purchaseData.gst is a valid number
-    const gstPercentage = parseFloat(saleData.gst);
 
-    // Check if gstPercentage is a valid number between 0 and 100 (inclusive)
-    if (!isNaN(gstPercentage) && gstPercentage >= 0 && gstPercentage <= 100) {
-      // Calculate the GST amount
-      const gstAmount = (originalAmount * gstPercentage) / 100;
+    if (saleData.invoiceType === "GST") {
+      const gstPercentage = parseFloat(saleData.gst);
 
-      // Calculate the new total with GST
-      const newAmount = originalAmount + gstAmount;
+      // Check if gstPercentage is a valid number between 0 and 100 (inclusive)
+      if (!isNaN(gstPercentage) && gstPercentage >= 0 && gstPercentage <= 100) {
+        const gstAmount = (originalAmount * gstPercentage) / 100;
+        const newAmount = originalAmount + gstAmount;
 
-      // Update purchaseData.amount and the state
-      saleData.amount = Math.round(newAmount);
-      setAmount(saleData.amount);
+        // Update purchaseData.amount and the state
+        saleData.amount = Math.round(newAmount);
+        setAmount(saleData.amount);
+      } else {
+        saleData.amount = Math.round(originalAmount);
+        setAmount(originalAmount);
+      }
     } else {
-      saleData.amount = Math.round(originalAmount);
-      setAmount(originalAmount);
-      // Handle the case where the GST percentage is invalid
-      // You can set purchaseData.amount to its previous value or any other desired behavior
+      saleData.gst = 0;
     }
-  }, [saleData.gst, originalAmount]);
+  }, [saleData.gst, originalAmount, saleData.invoiceType]);
 
 
   const nameSuppHandle = (event) => {
@@ -214,16 +213,66 @@ function SaleInvoice() {
 
 
 
-  const addSaleItem = () => {
-    if (saleData.name && saleData.quantity && saleData.salePrice && isZero && saleData.clientName) {
+  const storeDB = new Dexie(`store_${user.name}`);
+  storeDB.version(4).stores({
+    items: "name", // collection with keyPath name and
+  })
 
-      setAddedItems(prevAddedItems => [...prevAddedItems, saleData]);
-      setSaleData({ ...saleData, name: "", unit: "KG", quantity: "", salePrice: "", disc: "", gst: "18", amount: "" });
+  const [allItem, setAllItems] = useState(null);
+  useEffect(() => {
+    const allAvailItems = async () => {
+      return await storeDB.items.toArray();
+    }
+    allAvailItems().then((data) => {
+      setAllItems(data)
+    });
+  }, [])
+
+  console.log("addedItem", addedItems)
+  const addSaleItem = async () => {
+
+    if (saleData.name && saleData.quantity && saleData.salePrice && isZero && saleData.clientName) {
+      // Create a map to track the sold quantities for each item
+      const soldQuantities = {};
+
+      const itemName = saleData.name.toLowerCase();
+      // const existingItem = await storeDB.items.get(itemName);
+
+      const existingQuantity = parseFloat(allItem.find(item => item.name === itemName)?.quantity) || 0;
+      const itemIndex = allItem.findIndex(item => item.name === itemName);
+      const soldQuantity = parseFloat(saleData.quantity);
+
+      if (existingQuantity > 0) {
+        if (existingQuantity >= soldQuantity) {
+
+          if (itemIndex !== -1) {
+            allItem[itemIndex].quantity = (existingQuantity - soldQuantity);
+          }
+          soldQuantities[itemName] = soldQuantity;
+
+          const index = addedItems.findIndex(item => item.name === saleData.name);
+
+          if (index !== -1) {
+            addedItems[index] = { ...addedItems[index], ...saleData };
+          } else {
+            setAddedItems(prevAddedItems => [...prevAddedItems, saleData]);
+          }
+
+          setSaleData({ ...saleData, name: "", unit: "KG", quantity: "", salePrice: "", disc: "", gst: "18", amount: "" });
+        } else {
+          toast.error(`Error: Not enough ${itemName}(s) in stock.`);
+          return; // Exit the function if any item is not available
+        }
+      } else {
+        toast.error(`Item ${itemName} has an empty quantity in the store.`);
+        return false; // Reject promise if item has empty quantity
+      }
+
+      setSoldQuantitie(soldQuantities)
     } else {
       toast.error("require fields are not empty");
     }
   };
-
 
 
   const db = new Dexie(`sale_${user.name}`);
@@ -234,52 +283,27 @@ function SaleInvoice() {
     saleItems: '++id,today,clientName,date', // New collection
   });
 
-  const storeDB = new Dexie(`store_${user.name}`);
-  storeDB.version(4).stores({
-    items: "name", // collection with keyPath name and
-  })
-
   const dailySale = new Dexie(`dailySale_${user.name}`);
   dailySale.version(5).stores({
-    sales: '++id,clientName', //'++id' is an auto-incremented unique identifier
+    sales: '++id,today,clientName', //'++id' is an auto-incremented unique identifier
   });
 
+
   // Define the handleSale function
-  const handleSale = async (itemsSold) => {
+  const handleSale = async (salesItems) => {
     try {
-      // Create a map to track the sold quantities for each item
-      const soldQuantities = {};
-
-      // Check if all items are available in the store and update soldQuantities
-      for (const item of itemsSold) {
-        const itemName = item.name.toLowerCase();
-        const existingItem = await storeDB.items.get(itemName);
-
-        const existingQuantity = parseFloat(existingItem?.quantity) || 0;
-        const soldQuantity = parseFloat(item.quantity);
-
-        if (existingQuantity >= soldQuantity) {
-          // Deduct the sold quantity from the existing quantity
-          existingItem.quantity = (existingQuantity - soldQuantity).toString(); // Convert back to string for storage
-          soldQuantities[itemName] = soldQuantity;
-        } else {
-          toast.error(`Error: Not enough ${itemName}(s) in stock.`);
-          return; // Exit the function if any item is not available
-        }
-      }
-
       // Update the store items with the new quantities
       await storeDB.transaction('rw', storeDB.items, async () => {
-        for (const itemName in soldQuantities) {
+        for (const itemName in salesItems) {
           const existingItem = await storeDB.items.get(itemName);
-          existingItem.quantity -= soldQuantities[itemName];
+          existingItem.quantity -= salesItems[itemName];
           await storeDB.items.put(existingItem);
         }
       });
 
       // Display the remaining quantities for all items
-      for (const itemName in soldQuantities) {
-        const remainingQuantity = soldQuantities[itemName];
+      for (const itemName in salesItems) {
+        const remainingQuantity = salesItems[itemName];
         toast.success(`Sold ${remainingQuantity} ${itemName}(s).`);
       }
     } catch (error) {
@@ -292,34 +316,14 @@ function SaleInvoice() {
     if (addedItems.length > 0) {
       const promises = addedItems.map(async (item) => {
         try {
-          const itemName = item.name.toLowerCase();
-          const existingItem = await storeDB.items.get(itemName);
-          const existingQuantity = parseFloat(existingItem?.quantity) || 0;
-          const soldQuantity = parseFloat(item.quantity);
 
-          if (existingQuantity > 0) {
-            if (existingQuantity >= soldQuantity) {
-              // Deduct the sold quantity from the store's quantity
-              existingItem.quantity = (existingQuantity - soldQuantity).toString();
-              await storeDB.transaction('rw', storeDB.items, async () => {
-                await storeDB.items.put(existingItem);
-              });
-
-              // Add the item to the saleDB
-              await db.saleItems.add(item);
-              await dailySale.sales.add(item);
-            } else {
-              toast.warn(` Not enough ${itemName}(s) in stock.`);
-              return false; // Reject promise if insufficient stock
-            }
-          } else {
-            toast.error(`Item ${itemName} has an empty quantity in the store.`);
-            return false; // Reject promise if item has empty quantity
-          }
+          // Add the item to the saleDB
+          await db.saleItems.add(item);
+          await dailySale.sales.add(item);
 
           return true; // Resolve promise if added successfully
+
         } catch (error) {
-          toast.error('Error adding item:', error);
           return false; // Reject promise if error occurred
         }
       });
@@ -328,17 +332,16 @@ function SaleInvoice() {
 
       if (results.every((result) => result)) {
         // All promises resolved successfully, now call handleSale with the array of sold items
-        handleSale(addedItems);
-
         window.print();
+        handleSale(soldQuantitie);
+
         toast.success('Items added to collection');
         setAddedItems([]);
         setFractionalPart(0)
         setDiscountAmount(null)
         setGstAmount(null)
       } else {
-        // At least one promise had an error
-        toast.error('Some items could not be added.');
+        toast.error('Error adding item');
       }
     } else {
       toast.warn('Add Sale Details');
@@ -353,50 +356,47 @@ function SaleInvoice() {
     setAddedItems(updatedItems); // Update the state to reflect the deleted item
   };
 
+  // auto suggest function 
+  const [store, setStore] = useState([]);
+  const [filteredStore, setFilteredStore] = useState([]);
+
+  useEffect(() => {
+    // Function to get all data from indexeddb store collection
+    async function getStore() {
+      const storeData = await storeDB.items.toArray();
+      storeData.length > 0 ? setStore(storeData) : setStore([]);
+    }
+
+    getStore();
+  }, []);
 
 
+  // Function to filter store based on input value
+  const searchItemName = (value) => {
+    const filteredItems = store.filter((item) =>
+      item.name.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredStore(filteredItems);
+  };
 
-// auto suggest function 
-const [store, setStore] = useState([]);
-const [filteredStore, setFilteredStore] = useState([]);
+  const nameHandle = (event) => {
+    const { name, value } = event.target;
+    const lowercaseValue = ['name'].includes(name) ? value.toLowerCase() : value;
 
-useEffect(() => {
-  // Function to get all data from indexeddb store collection
-  async function getStore() {
-    const storeData = await storeDB.items.toArray();
-    storeData.length > 0 ? setStore(storeData) : setStore([]);
-  }
+    setSaleData((prevData) => ({
+      ...prevData,
+      [name]: lowercaseValue,
+    }));
 
-  getStore();
-}, []);
+    searchItemName(value);
 
+  };
 
-// Function to filter store based on input value
-const searchItemName = (value) => {
-  const filteredItems = store.filter((item) =>
-    item.name.toLowerCase().includes(value.toLowerCase())
-  );
-  setFilteredStore(filteredItems);
-};
-
-const nameHandle = (event) => {
-  const { name, value } = event.target;
-  const lowercaseValue = ['name'].includes(name) ? value.toLowerCase() : value;
-
-  setSaleData((prevData) => ({
-    ...prevData,
-    [name]: lowercaseValue,
-  }));
-
-  searchItemName(value);
-
-};
-
-// Function to handle item selection
-const handleItemClick = (item) => {
-  setSaleData({ ...saleData, name: item.name, salePrice:item.salePrice, unit:item.unit });
-  setFilteredStore([])
-};
+  // Function to handle item selection
+  const handleItemClick = (item) => {
+    setSaleData({ ...saleData, name: item.name, salePrice: item.salePrice, unit: item.unit });
+    setFilteredStore([])
+  };
 
 
   return (
@@ -413,14 +413,19 @@ const handleItemClick = (item) => {
         pauseOnHover
         theme="light"
       />
-      <div className="sale-content-parentdiv">
+      <div className="sale-content-parentdiv p-3">
         <div className="print-show">
           <div className="invoice text-center">
-            <h4 className="text-center mb-3">Invoice</h4>
+            <h6 className="text-center inv-txt mb-3">Invoice</h6>
           </div>
-          <div className="d-flex justify-content-start gap-5">
-            <ShopDetails />
-            <CustomerDetails saleData={saleData} />
+          <div className="d-flex justify-content-between gap-1 border">
+            <div className="print-detail">
+              <ShopDetails />
+            </div>
+            <div className="print-detail">
+              <CustomerDetails saleData={saleData} />
+            </div>
+
           </div>
         </div>
         <div className="back-div">
@@ -481,7 +486,7 @@ const handleItemClick = (item) => {
         </div>
 
         <div className="item-section mt-4 mx-4">
-          
+
           <div>
             <label className="lable-txt" htmlFor="name">
               Name <span className="text-danger">*</span>
@@ -495,7 +500,7 @@ const handleItemClick = (item) => {
               name="name"
               value={saleData.name}
             />
-             <div className="result_item">
+            <div className="result_item">
               {/* Display the filtered results as a list of names */}
               <ul className="list-group">
                 {filteredStore.map((item) => (
@@ -623,11 +628,11 @@ const handleItemClick = (item) => {
         </div>
 
         {/* div for spacing */}
-        <div className="d-block space-div "></div>
+        <div className=" space-div "></div>
 
         {/* add item list */}
-        <div ref={tableDiv} className="item-list-parent mx-3 border">
-          <table className="table caption-top text-center ">
+        <div ref={tableDiv} className="item-list-parent">
+          <table className="table table-bordered caption-top text-center ">
             <thead className="table-info">
               <tr>
                 <th className="name-head" scope="col">
@@ -639,12 +644,12 @@ const handleItemClick = (item) => {
                 <th scope="col">Discount %</th>
                 <th scope="col">Tax %</th>
                 <th scope="col">Total Amount</th>
-                <th scope="col"> </th>
+                <th className="sale_invoice_cut_item" scope="col"> </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="tbody-txt">
               {addedItems.map((item, index) => (
-                <tr className="position-relative" key={index}>
+                <tr className="position-relative tbody-txt" key={index}>
                   <td>{item.name}</td>
                   <td>{item.quantity}</td>
                   <td>{item.unit}</td>
@@ -652,9 +657,9 @@ const handleItemClick = (item) => {
                   <td>{item.disc === "" ? "0" : item.disc} %</td>
                   <td>{item.gst === "" ? "0" : item.gst} %</td>
                   <td>{item.amount}</td>
-                  <td>
+                  <td className="sale_invoice_cut_item">
                     {/* Add the delete button (X) and call handleDeleteItem with the item's index */}
-                    <button className="border border-light bg-danger text-light sale_invoice_cut_item" onClick={() => handleDeleteItem(index)}>X</button>
+                    <button className="border border-light bg-danger text-light" onClick={() => handleDeleteItem(index)}>X</button>
                   </td>
                 </tr>
               ))}

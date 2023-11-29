@@ -1,4 +1,4 @@
-const { app, BrowserWindow, screen } = require('electron');
+ const { app, BrowserWindow, screen } = require('electron');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
@@ -52,7 +52,3 @@ app.on("window-all-closed", function () {
 });
 
 
-
-// unique identifier for only one pc
-
-// ...here

@@ -1,23 +1,15 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-
 const os = require('os');
-
 import Spinner from './Spinner'
-
 import { ToastContainer, toast } from 'react-toastify';
-
 import 'react-toastify/dist/ReactToastify.css';
 
 const Signup = (props) => {
-
     const deviceName = os.hostname();
     const platform = os.platform();
     const osName = os.type();
-
     const [spin, setSpin] = useState(false)
-
-
     const [name, setName] = useState("")
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
@@ -28,9 +20,6 @@ const Signup = (props) => {
         if (name && email && password) {
             setConfirmPassword(event.target.value);
         }
-        else {
-
-        }
     }
 
     const handleSingup = async () => {
@@ -38,9 +27,8 @@ const Signup = (props) => {
         try {
             if (confirmPassword === password) {
                 setSpin(true);
-
-                // signup api fetch
-                let data = await fetch("https://billing-soft-backend-production.up.railway.app/auth/signup", {
+                // let data = await fetch("https://billing-soft-backend-production.up.railway.app/auth/signup", {
+                let data = await fetch("http://localhost:8001/auth/signup", {
                     method: "POST",
                     body: JSON.stringify({ name: name, email: email, password: password, deviceName: deviceName, devicePlatform: platform, deviceType: osName }),
                     headers: {
@@ -59,19 +47,16 @@ const Signup = (props) => {
                     setSpin(false)
                 }
             } else {
-                toast.error("password did not matched")
+                toast.error("Password Did Not Matched")
                 setErr(true)
                 setSpin(false)
             }
         } catch (error) {
-            toast.error("Server Not Found : ", error);
+            toast.error("Some Error Accured Try Again");
             setSpin(false)
         }
     }
-
     return (
-
-
         <>
             <ToastContainer
                 position="top-center"

@@ -53,7 +53,7 @@ const Stock = () => {
 
     return (
 
-        <div className="sale-content-parentdiv">
+        <div className="sale-content-parentdiv p-3">
             <div className="back-div">
                 <span className="back" onClick={() => navigate(-1)}>&larr;</span><span className="mx-5 h6">Store</span>
 
