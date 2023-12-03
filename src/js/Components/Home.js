@@ -3,7 +3,7 @@ import Balance from './Balance'
 import HomeContent from './HomeContent'
 // import UpdateDB from './UpdateDB'
 
-const Home = (props) => {
+const Home = () => {
   return (
     <>
     <div className="main">

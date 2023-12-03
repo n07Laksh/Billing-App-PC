@@ -23,7 +23,7 @@ function createWindow() {
     }
   })
 
-  win.setTitle('Tribe Vyapar Solutions');
+  win.setTitle('Bill Wala');
   win.removeMenu();
   win.loadFile("index.html");
   win.webContents.openDevTools();

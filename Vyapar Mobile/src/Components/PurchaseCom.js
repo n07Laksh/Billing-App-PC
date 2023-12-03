@@ -1,16 +1,15 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Dexie from 'dexie'
+
 import TextField from '@mui/material/TextField';
-
-import { ToastContainer, toast } from 'react-toastify';
-
 import Paper from '@mui/material/Paper';
 import Fab from '@mui/material/Fab';
 import RightArrow from "../images/arrow.png"
 import Add from "../images/add.png"
 import SaveIcon from '@mui/icons-material/Save';
 
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function PurchaseInvoice() {
@@ -69,6 +68,8 @@ function PurchaseInvoice() {
     tableDiv.current.scrollTop = tableDiv.current.scrollHeight;
   }, [addedItems]);
 
+
+
   // calculate discount and auto fill for sale amount
   useEffect(() => {
     const itemAmount = addedItems.quantity * addedItems.purchasePrice;
@@ -85,6 +86,8 @@ function PurchaseInvoice() {
     }
 
   }, [addedItems.purchasePrice, addedItems.quantity, addedItems.disc, purchaseData.invoiceType]);
+
+
 
 
   useEffect(() => {
@@ -109,13 +112,16 @@ function PurchaseInvoice() {
   }, [addedItems.gst, originalAmount, purchaseData.invoiceType]);
 
 
+
+
   // const storeDB = new Dexie(`store_${user.name}`);
   const storeDB = new Dexie(`store`);
   storeDB.version(4).stores({
     items: "name", // collection with keyPath name and
   })
 
-  // auto suggest function 
+
+  // auto suggest function
   const [store, setStore] = useState([]);
   const [filteredStore, setFilteredStore] = useState([]);
 
@@ -130,6 +136,8 @@ function PurchaseInvoice() {
   }, []);
 
 
+
+
   // Function to filter store based on input value
   const searchItemName = (value) => {
     const filteredItems = store.filter((item) =>
@@ -137,6 +145,7 @@ function PurchaseInvoice() {
     ); searchItemName
     setFilteredStore(filteredItems);
   };
+
 
 
   const saleItemChange = (event) => {
@@ -154,6 +163,8 @@ function PurchaseInvoice() {
     }
   }
 
+
+
   const inputChange = (event) => {
     setPurchaseData({
       ...purchaseData,
@@ -163,32 +174,87 @@ function PurchaseInvoice() {
 
 
 
+
+
+  // const addSaleItem = () => {
+  //
+  //   if (addedItems.name && addedItems.quantity && addedItems.purchasePrice && isZero && purchaseData.supplierName) {
+  //     // setAddedItems([...addedItems, purchaseData]);
+  //     const updatedSaleItem = [...purchaseData.purchaseItem];
+  //     updatedSaleItem.push(addedItems);
+  //
+  //     setPurchaseData(prevData => ({
+  //       ...prevData,
+  //       purchaseItem: updatedSaleItem
+  //     }));
+  //
+  //     setAddedItems(prevData => ({
+  //       ...prevData,
+  //       name: "",
+  //       quantity: "",
+  //       purchasePrice: "",
+  //       salePrice: "",
+  //       disc: "",
+  //       amount: ""
+  //     }));
+  //
+  //   } else {
+  //     toast.error("require fields are not empty");
+  //   }
+  // };
+
+  
   const addSaleItem = () => {
+    if (
+      addedItems.name &&
+      addedItems.quantity &&
+      addedItems.purchasePrice &&
+      isZero &&
+      purchaseData.supplierName
+    ) {
+      const existingItemIndex = purchaseData.purchaseItem.findIndex(
+        item => item.name === addedItems.name
+      );
 
-    if (addedItems.name && addedItems.quantity && addedItems.purchasePrice && isZero && purchaseData.supplierName) {
-      // setAddedItems([...addedItems, purchaseData]);
-      const updatedSaleItem = [...purchaseData.purchaseItem];
-      updatedSaleItem.push(addedItems);
+      if (existingItemIndex !== -1) {
+        const updatedPurchaseItem = purchaseData.purchaseItem.map(item => {
+          if (item.name === addedItems.name) {
+            return {
+              ...item,
+              quantity: parseFloat(item.quantity) + parseFloat(addedItems.quantity),
+              // Update other properties if needed
+            };
+          }
+          return item;
+        });
 
-      setPurchaseData(prevData => ({
-        ...prevData,
-        purchaseItem: updatedSaleItem
-      }));
+        setPurchaseData(prevData => ({
+          ...prevData,
+          purchaseItem: updatedPurchaseItem,
+        }));
+      } else {
+        // If the item doesn't exist, add it to the purchaseItem array
+        setPurchaseData(prevData => ({
+          ...prevData,
+          purchaseItem: [...prevData.purchaseItem, addedItems],
+        }));
+      }
 
-      setAddedItems(prevData => ({
-        ...prevData,
+      // Reset addedItems fields
+      setAddedItems({
         name: "",
         quantity: "",
         purchasePrice: "",
         salePrice: "",
         disc: "",
-        amount: ""
-      }));
-
+        amount: "",
+      });
     } else {
-      toast.error("require fields are not empty");
+      toast.error("Required fields are not filled");
     }
   };
+
+
 
 
 
@@ -202,11 +268,15 @@ function PurchaseInvoice() {
   });
 
 
+
+
   // const dailyPurchase = new Dexie(`dailyPurchase_${user.name}`);
   const dailyPurchase = new Dexie(`dailyPurchase`);
   dailyPurchase.version(5).stores({
     purchases: '++id,supplierName', //'++id' is an auto-incremented unique identifier
   });
+
+
 
 
 
@@ -267,6 +337,8 @@ function PurchaseInvoice() {
   };
 
 
+
+
   const handleDeleteItem = (index) => {
     const updatedItems = [...purchaseData.purchaseItem];
     updatedItems.splice(index, 1); // Remove the item at the specified index
@@ -278,24 +350,14 @@ function PurchaseInvoice() {
 
 
 
-  // const nameHandle = (event) => {
-  //   const { name, value } = event.target;
-  //   const lowercaseValue = ['name'].includes(name) ? value.toLowerCase() : value;
 
-  //   setPurchaseData((prevData) => ({
-  //     ...prevData,
-  //     [name]: lowercaseValue,
-  //   }));
-
-  //   searchItemName(value);
-
-  // };
 
   // Function to handle item selection
   const handleItemClick = (item) => {
     setAddedItems({ ...addedItems, name: item.name, purchasePrice: item.purchasePrice, salePrice: item.salePrice });
     setFilteredStore([])
   };
+
 
   const handleNewInvoice = () => {
     setPurchaseData(prevData => ({
@@ -317,7 +379,12 @@ function PurchaseInvoice() {
     }))
   }
 
-  console.log("PURCHASE DATA", purchaseData);
+
+
+
+
+
+
   return (
     <>
       <ToastContainer

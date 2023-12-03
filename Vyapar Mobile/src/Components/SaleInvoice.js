@@ -82,7 +82,7 @@ function SaleInvoice() {
       addedItems.amount = itemAmount;
       setIsZero(true);
     }
-  }, [addedItems.salePrice, addedItems.quantity, addedItems.disc, addedItems.invoiceType,]);
+  }, [addedItems.salePrice, addedItems.quantity, addedItems.disc, saleData.invoiceType,]);
 
   useEffect(() => {
     // Ensure purchaseData.gst is a valid number
@@ -116,7 +116,7 @@ function SaleInvoice() {
     items: "name", // collection with keyPath name and
   })
 
-  // auto suggest function 
+  // auto suggest function
   const [store, setStore] = useState([]);
   const [filteredStore, setFilteredStore] = useState([]);
 
@@ -187,7 +187,6 @@ function SaleInvoice() {
       const existingQuantity = parseFloat(allItem.find(item => item.name.toLowerCase() === itemName)?.quantity) || 0;
       const itemIndex = allItem.findIndex(item => item.name.toLowerCase() === itemName);
       const soldQuantity = parseFloat(quantity);
-      console.log("itemName", itemName)
 
       if (existingQuantity > 0) {
         if (existingQuantity >= soldQuantity) {
@@ -724,7 +723,7 @@ function SaleInvoice() {
 
         </div>
 
-        <div className="sale-details m-4">
+        <div className="sale-details">
           <SaleDetails total={total} discountAmount={discountAmount} grandTotal={grandTotal} />
         </div>
 

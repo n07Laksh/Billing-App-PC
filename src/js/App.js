@@ -22,26 +22,28 @@ const App = () => {
   const [login, setLogin] = useState(user ? true : false);
 
 useEffect(() => {
-  // Check if the user token exists in localStorage
-  const userToken = localStorage.getItem('user');
+  const storedUser = localStorage.getItem('user');
+  const lastLoginTime = localStorage.getItem('lastLoginTime');
 
-  if (userToken) {
-    const lastLoginTime = localStorage.getItem('lastLoginTime');
-    const currentTime = new Date();
-    
-    // Calculate the time difference in milliseconds
-    const timeDifference = currentTime - (lastLoginTime || 0);
-    
+  if (storedUser && lastLoginTime) {
+    const currentTime = new Date().getTime();
+    const storedTime = parseInt(lastLoginTime, 10);
     const oneDayInMilliseconds = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
     
-    // Check if the user token should be removed (e.g., if it's older than 24 hours)
-    if (timeDifference >= oneDayInMilliseconds) {
-      // Remove the user token from localStorage
-      localStorage.removeItem('user');
-    }
-  }
+    const timeDifference = currentTime - storedTime;
 
-}, [login,user]);
+    if (timeDifference >= oneDayInMilliseconds) {
+      localStorage.removeItem('user');
+      localStorage.removeItem('lastLoginTime');
+      setLogin(false); // Update the login state if the token is removed
+    } else {
+      setLogin(true); // Set login state to true if the token is valid
+    }
+  } else {
+    setLogin(false); // Set login state to false if no user or lastLoginTime found
+  }
+}, []);
+
 
 
   return (
