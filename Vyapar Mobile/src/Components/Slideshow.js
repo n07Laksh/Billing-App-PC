@@ -1,13 +1,13 @@
 import React from 'react';
-import img1 from "../images/slideIMG/1.png";
+import BillUI from "../images/billui.jpg"
 function Slideshow() {
 
 
   return (
-    <div>
+    <div style={{background: "black",height: "305px"}}>
       <div className="slideshow-container">
         <div className={`mySlides active`}>
-          <img src={img1} alt="Slide 1" />
+          <img src={BillUI} alt="Slide 1" />
         </div>
       </div>
     </div>

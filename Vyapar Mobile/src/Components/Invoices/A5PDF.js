@@ -1,333 +1,366 @@
-import React from 'react';
-import { jsPDF } from 'jspdf';
-import Logo from "./tts-logo.png"
-
-const itemsData = [
-    { Item: 'Product 1', 'Unit Price': '$10', Qnt: '2', 'Disc%': '5%', 'GST%': '10%', Total: '$20' },
-    { Item: 'Product 2', 'Unit Price': '$15', Qnt: '1', 'Disc%': '0%', 'GST%': '7%', Total: '$15' },
-    { Item: 'Product 3', 'Unit Price': '$15', Qnt: '1', 'Disc%': '0%', 'GST%': '7%', Total: '$15' },
-    { Item: 'Product 3', 'Unit Price': '$15', Qnt: '1', 'Disc%': '0%', 'GST%': '7%', Total: '$15' },
-    { Item: 'Product 3', 'Unit Price': '$15', Qnt: '1', 'Disc%': '0%', 'GST%': '7%', Total: '$15' },
-    { Item: 'Product 3', 'Unit Price': '$15', Qnt: '1', 'Disc%': '0%', 'GST%': '7%', Total: '$15' },
-    { Item: 'Product 3', 'Unit Price': '$15', Qnt: '1', 'Disc%': '0%', 'GST%': '7%', Total: '$15' },
-    { Item: 'Product 3', 'Unit Price': '$15', Qnt: '1', 'Disc%': '0%', 'GST%': '7%', Total: '$15' },
-    { Item: 'Product 3', 'Unit Price': '$15', Qnt: '1', 'Disc%': '0%', 'GST%': '7%', Total: '$15' },
-    { Item: 'Product 3', 'Unit Price': '$15', Qnt: '1', 'Disc%': '0%', 'GST%': '7%', Total: '$15' },
+import React from "react";
+import { jsPDF } from "jspdf";
+import Logo from "./tts-logo.png";
+import A4 from "./a4.png";
+import A5 from "./a5.png";
+import TP from "./thermal-printer.png";
 
-    // Add more items as needed
-];
+const generateA5PDF = (item, shop, gst, img, add) => {
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "in",
+    format: [5.8, 8.3], // A5 size in inches (portrait)
+  });
 
-const generateA5PDF = () => {
-    const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'in',
-        format: [5.8, 8.3] // A5 size in inches (portrait)
-    });
+  doc.addImage(img ? img : Logo, "PNG", 0.5, 0.7, 0.7, 0.7);
 
-    doc.addImage(Logo, 'PNG', 0.5, 0.7, 0.7, 0.7);
+  doc.setFontSize(17);
+  doc.setFont("helvetica", "bold"); // Set font as bold
+  const textes = `${add.shopName}`;
+  const textWidths = 170; // Maximum width for the text
+  const textLinese = getWrappedTextLines(textes, textWidths);
+  doc.text(textLinese, 0.5, 1.7); // Example content
 
-    doc.setFontSize(17);
-    doc.setFont('helvetica', 'bold'); // Set font as bold
-    const textes = "Tribe Tech Solutions";
-    const textWidths = 170; // Maximum width for the text
-    const textLinese = getWrappedTextLines(textes, textWidths);
-    doc.text(textLinese, 0.5, 1.7); // Example content
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text("Office Address", 0.5, 2.2);
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.text("Office Address", 0.5, 2.2)
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
+  const text = `${add.address}`;
+  const textWidth = 100; // Maximum width for the text
 
-    const text = "Main street, Number 06/8, south, Yk";
-    const textWidth = 100; // Maximum width for the text
+  const textLines = getWrappedTextLines(text, textWidth);
+  doc.text(textLines, 0.5, 2.4);
 
-    const textLines = getWrappedTextLines(text, textWidth);
-    doc.text(textLines, 0.5, 2.4);
+  doc.text(`${add.contact}`, 0.5, 3);
 
-    doc.text("1234567890", 0.5, 3)
+  doc.setFontSize(28);
+  doc.setFont("helvetica", "bold");
+  doc.text("Invoice", 3.8, 1);
 
+  doc.setFontSize(12);
+  doc.text(`${item.today}`, 3.8, 1.2);
 
-    doc.setFontSize(28);
-    doc.setFont('helvetica', 'bold');
-    doc.text("Invoice", 3.8, 1)
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10)
+  doc.text(`GSTIN - ${gst}`, 3.8, 1.5);
 
-    doc.setFontSize(12);
-    doc.text("December 25, 2023", 3.8, 1.3)
+  doc.setFontSize(10);
+  doc.text("to:", 3.8, 2.2);
 
-    doc.setFontSize(10);
-    doc.text("to:", 3.8, 2.2)
+  doc.text(`${item.clientName}`, 3.8, 2.4);
 
-    doc.text("John Doe", 3.8, 2.4)
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  const texts = `${item.clientAddress}`;
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    const texts = "Main street, Your Loc.\"Number 06/B";
+  const textLiness = getWrappedTextLines(texts, textWidth);
+  doc.text(textLiness, 3.8, 2.6);
 
-    const textLiness = getWrappedTextLines(texts, textWidth);
-    doc.text(textLiness, 3.8, 2.6);
+  doc.text(`${item.clientContact}`, 3.8, 3);
 
-    doc.text("+1234657920", 3.8, 3)
+  // Table headers
+  const headers = ["Item", "Price", "Qnt", "Disc", "GST", "Total"];
+  const headerPositions = [0.6, 2.5, 3.2, 3.6, 4, 4.6];
 
-    // Table headers
-    const headers = ['Item', 'Price', 'Qnt', 'Disc', 'GST', 'Total'];
-    const headerPositions = [0.6, 2.5, 3.2, 3.6, 4, 4.6];
+  let startY = 3.5; // Initial Y position for the first row
+  const lineHeight = 0.3; // Height of each row
 
-    let startY = 3.5; // Initial Y position for the first row
-    const lineHeight = 0.3; // Height of each row
+  doc.setFillColor(0); // Transparent fill color
+  doc.rect(0.5, startY - 0.17, 4.8, 0.24, "F");
+  doc.setTextColor("#fff"); // Example: white color
+  // Populate table headers
+  headers.forEach((header, index) => {
+    doc.text(header, headerPositions[index], startY);
+  });
+  doc.setTextColor("#000"); // Example: Black color
 
-    doc.setFillColor(0); // Transparent fill color
-    doc.rect(0.5, startY - 0.17, 4.8, 0.24, "F");
-    doc.setTextColor('#fff'); // Example: white color
-    // Populate table headers
-    headers.forEach((header, index) => {
-        doc.text(header, headerPositions[index], startY);
-    });
-    doc.setTextColor('#000'); // Example: Black color
+  // Populate table with data
+  item.saleItem.forEach((item, index) => {
+    const { name, salePrice, quantity, disc, gst, amount } = item;
 
-    // Populate table with data
-    itemsData.forEach((item, index) => {
-        const { Item, 'Unit Price': unitPrice, Qnt, 'Disc%': disc, 'GST%': gst, Total } = item;
+    const yPos = startY + (index + 1) * lineHeight;
 
-        const yPos = startY + ((index + 1) * lineHeight);
+    doc.text(String(name), headerPositions[0], yPos);
+    doc.text(String(salePrice), headerPositions[1], yPos);
+    doc.text(String(quantity), headerPositions[2], yPos);
+    doc.text(String(disc?disc+"%":"0%"), headerPositions[3], yPos);
+    doc.text(String(gst?gst+"%":"0%"), headerPositions[4], yPos);
+    doc.text(String(amount), headerPositions[5], yPos);
+  });
 
-        doc.text(Item, headerPositions[0], yPos);
-        doc.text(unitPrice, headerPositions[1], yPos);
-        doc.text(Qnt, headerPositions[2], yPos);
-        doc.text(disc, headerPositions[3], yPos);
-        doc.text(gst, headerPositions[4], yPos);
-        doc.text(Total, headerPositions[5], yPos);
-    });
+  const tableBottomY = startY + (item.saleItem.length + 1) * lineHeight; // Calculate the bottom of the table
 
-    const tableBottomY = startY + ((itemsData.length + 1) * lineHeight); // Calculate the bottom of the table
+  // Example: Continue with other content below the table
+  const nextSectionY = tableBottomY + 0.5; // Example: Start the next section below the table
 
-    // Example: Continue with other content below the table
-    const nextSectionY = tableBottomY + 0.5; // Example: Start the next section below the table
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.text("Total Qyt.", 1.7, nextSectionY);
 
-    doc.setFontSize(10)
-    doc.setFont('helvetica', 'bold');
-    doc.text('Total Qyt.', 1.7, nextSectionY);
+  doc.text(`${totalCount(item.saleItem)}`, 2.5, nextSectionY);
 
-    doc.text('5', 2.5, nextSectionY);
+  doc.setFont("helvetica", "bold");
+  doc.text("Sub-total", 3.2, nextSectionY);
 
+  doc.setFont("helvetica", "bold");
+  doc.text(`${totalMoney(item.saleItem)}`, 4.4, nextSectionY);
 
-    doc.setFont('helvetica', 'bold');
-    doc.text('Sub-total', 3.2, nextSectionY);
+  // Set background color behind the text
+  const t = "Grand-total";
+  const xPos = 3.2;
+  const fontSize = 12;
+  const backgroundColor = "#000"; // Example: Yellow color
 
-    doc.setFont('helvetica', 'bold');
-    doc.text('12345.00 \u20B9', 4.4, nextSectionY);
+  // Get text width and height
+  const tex = doc.getTextWidth(text);
 
-    // Set background color behind the text
-    const t = 'Grand-total';
-    const xPos = 3.2;
-    const fontSize = 12;
-    const backgroundColor = '#000'; // Example: Yellow color
+  // Draw a rectangle as background
+  doc.setFillColor(backgroundColor);
+  doc.rect(xPos - 0.07, nextSectionY + 0.06, tex + 0.02, 0.36, "F"); // Adjust rectangle size as needed
 
-    // Get text width and height
-    const tex = doc.getTextWidth(text);
+  // Set font size and color for the text
+  doc.setFontSize(fontSize);
+  doc.setTextColor("#fff"); // Example: Black color
 
-    // Draw a rectangle as background
-    doc.setFillColor(backgroundColor);
-    doc.rect(xPos - 0.07, nextSectionY + 0.06, tex + 0.02, 0.36, 'F'); // Adjust rectangle size as needed
+  // Add the text on top of the rectangle
+  doc.text(t, xPos, nextSectionY + 0.3);
+  doc.text(`${totalMoney(item.saleItem)}`, 4.4, nextSectionY + 0.3);
 
-    // Set font size and color for the text
-    doc.setFontSize(fontSize);
-    doc.setTextColor('#fff'); // Example: Black color
+  doc.setTextColor("#000");
 
-    // Add the text on top of the rectangle
-    doc.text(t, xPos, nextSectionY + 0.3);
-    doc.text('12345.00 \u20B9', 4.4, nextSectionY + 0.3);
+  doc.setFont("", "bold");
+  doc.text("Thank you for business with us!", 0.5, nextSectionY + 0.7);
 
-    doc.setTextColor('#000');
+  doc.save(`${item.clientName}.pdf`);
+};
 
-    doc.setFont("", "bold")
-    doc.text("Thank you for business with us!", 0.5, nextSectionY + 0.7)
+const generateA4PDF = (item, shop, gst, img, add) => {
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "in",
+    format: "a4", // A4 size in portrait orientation
+  });
 
-    doc.save('a5.pdf');
-}
+  doc.addImage(img?img:Logo, "PNG", 1, 0.7, 0.7, 0.7);
 
-const generateA4PDF = () => {
-    const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'in',
-        format: 'a4' // A4 size in portrait orientation
-    });
+  doc.setFontSize(18);
+  doc.setFont("helvetica", "bold"); // Set font as bold
+  doc.text(`${add.shopName}`, 1, 1.7); // Example content
 
-    doc.addImage(Logo, 'PNG', 1, 0.7, 0.7, 0.7);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("Office Address", 1, 2.2);
 
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold'); // Set font as bold
-    doc.text('Business Name', 1, 1.7); // Example content
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.text("Office Address", 1, 2.2)
+  const text = `${add.address}`;
+  const textWidth = 100; // Maximum width for the text
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
+  const textLines = getWrappedTextLines(text, textWidth);
+  doc.text(textLines, 1, 2.4);
 
-    const text = "Main street, Number 06/8, south, Yk";
-    const textWidth = 100; // Maximum width for the text
+  doc.text(`${add.contact}`, 1, 3);
 
-    const textLines = getWrappedTextLines(text, textWidth);
-    doc.text(textLines, 1, 2.4);
+  doc.setFontSize(30);
+  doc.setFont("helvetica", "bold");
+  doc.text("Invoice", 5.7, 1);
 
-    doc.text("1234567890", 1, 3)
+  doc.setFontSize(13);
+  doc.text(`${item.today}`, 5.7, 1.3);
 
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10)
+  doc.text(`GSTIN - ${gst}`, 5.7, 1.6);
 
-    doc.setFontSize(30);
-    doc.setFont('helvetica', 'bold');
-    doc.text("Invoice", 5.7, 1)
+  doc.setFontSize(11);
+  doc.text("to:", 5.7, 2.2);
 
-    doc.setFontSize(13);
-    doc.text("December 25, 2023", 5.7, 1.3)
+  doc.setFontSize(11);
+  doc.text(`${item.clientName}`, 5.7, 2.4);
 
-    doc.setFontSize(11);
-    doc.text("to:", 5.7, 2.2)
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  const texts = `${item.clientAddress}`;
 
-    doc.setFontSize(11);
-    doc.text("John Doe", 5.7, 2.4)
+  const textLiness = getWrappedTextLines(texts, textWidth);
+  doc.text(textLiness, 5.7, 2.6);
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    const texts = "Main street, Your Loc.\"Number 06/B";
+  doc.text(`${item.clientContact}`, 5.7, 3);
 
-    const textLiness = getWrappedTextLines(texts, textWidth);
-    doc.text(textLiness, 5.7, 2.6);
+  // Table headers
+  const headers = ["Item", "Unit Price", "Qnt", "Disc%", "GST%", "Total"];
+  const headerPositions = [1.2, 3.4, 4.3, 4.9, 5.5, 6.6];
 
-    doc.text("+1234657920", 5.7, 3)
+  let startY = 3.6; // Initial Y position for the first row
+  const lineHeight = 0.3; // Height of each row
 
-    // Table headers
-    const headers = ['Item', 'Unit Price', 'Qnt', 'Disc%', 'GST%', 'Total'];
-    const headerPositions = [1.2, 3.4, 4.3, 4.9, 5.5, 6.6];
+  doc.setFillColor(0); // Transparent fill color
+  doc.rect(1, startY - 0.18, 6.3, 0.25, "F");
+  doc.setTextColor("#fff"); // Example: Black color
+  // Populate table headers
+  headers.forEach((header, index) => {
+    doc.text(header, headerPositions[index], startY);
+  });
+  doc.setTextColor("#000"); // Example: Black color
 
-    let startY = 3.6; // Initial Y position for the first row
-    const lineHeight = 0.3; // Height of each row
+  // Populate table with data
+  item.saleItem.forEach((item, index) => {
+    const { name, salePrice, quantity, disc, gst, amount } = item;
 
-    doc.setFillColor(0); // Transparent fill color
-    doc.rect(1, startY - 0.18, 6.3, 0.25, "F");
-    doc.setTextColor('#fff'); // Example: Black color
-    // Populate table headers
-    headers.forEach((header, index) => {
-        doc.text(header, headerPositions[index], startY);
-    });
-    doc.setTextColor('#000'); // Example: Black color
+    const yPos = startY + (index + 1) * lineHeight;
 
-    // Populate table with data
-    itemsData.forEach((item, index) => {
-        const { Item, 'Unit Price': unitPrice, Qnt, 'Disc%': disc, 'GST%': gst, Total } = item;
+    doc.text(String(name), headerPositions[0], yPos);
+    doc.text(String(salePrice), headerPositions[1], yPos);
+    doc.text(String(quantity), headerPositions[2], yPos);
+    doc.text(String(disc?disc+"%":"0%"), headerPositions[3], yPos);
+    doc.text(String(gst?gst+"%":"0%"), headerPositions[4], yPos);
+    doc.text(String(amount), headerPositions[5], yPos);
+  });
 
-        const yPos = startY + ((index + 1) * lineHeight);
+  const tableBottomY = startY + (item.saleItem.length + 1) * lineHeight; // Calculate the bottom of the table
 
-        doc.text(Item, headerPositions[0], yPos);
-        doc.text(unitPrice, headerPositions[1], yPos);
-        doc.text(Qnt, headerPositions[2], yPos);
-        doc.text(disc, headerPositions[3], yPos);
-        doc.text(gst, headerPositions[4], yPos);
-        doc.text(Total, headerPositions[5], yPos);
-    });
+  // Example: Continue with other content below the table
+  const nextSectionY = tableBottomY + 1; // Example: Start the next section below the table
 
-    const tableBottomY = startY + ((itemsData.length + 1) * lineHeight); // Calculate the bottom of the table
+  doc.setFontSize(10.7);
+  doc.setFont("helvetica", "bold");
+  doc.text("Total Qyt.", 2.7, nextSectionY);
 
-    // Example: Continue with other content below the table
-    const nextSectionY = tableBottomY + 1; // Example: Start the next section below the table
+  doc.text(`${totalCount(item.saleItem)}`, 3.7, nextSectionY);
 
-    doc.setFontSize(10.7)
-    doc.setFont('helvetica', 'bold');
-    doc.text('Total Qyt.', 2.7, nextSectionY);
+  doc.setFont("helvetica", "bold");
+  doc.text("Sub-total", 5, nextSectionY);
 
-    doc.text('5', 3.7, nextSectionY);
+  doc.setFont("helvetica", "bold");
+  doc.text(`${totalMoney(item.saleItem)}`, 6.5, nextSectionY);
 
+  // Set background color behind the text
+  const t = "Grand-total";
+  const xPos = 5;
+  const fontSize = 13;
+  const backgroundColor = "#000"; // Example: Yellow color
 
-    doc.setFont('helvetica', 'bold');
-    doc.text('Sub-total', 5, nextSectionY);
+  // Get text width and height
+  const tex = doc.getTextWidth(text);
 
-    doc.setFont('helvetica', 'bold');
-    doc.text('12345.00 \u20B9', 6.5, nextSectionY);
+  // Draw a rectangle as background
+  doc.setFillColor(backgroundColor);
+  doc.rect(xPos - 0.07, nextSectionY + 0.15, tex + 0.02, 0.36, "F"); // Adjust rectangle size as needed
 
-    // Set background color behind the text
-    const t = 'Grand-total';
-    const xPos = 5;
-    const fontSize = 13;
-    const backgroundColor = '#000'; // Example: Yellow color
+  // Set font size and color for the text
+  doc.setFontSize(fontSize);
+  doc.setTextColor("#fff"); // Example: Black color
 
-    // Get text width and height
-    const tex = doc.getTextWidth(text);
+  // Add the text on top of the rectangle
+  doc.text(t, xPos, nextSectionY + 0.4);
+  doc.text(`${totalMoney(item.saleItem)}`, 6.5, nextSectionY + 0.4);
 
-    // Draw a rectangle as background
-    doc.setFillColor(backgroundColor);
-    doc.rect(xPos - 0.07, nextSectionY + 0.15, tex + 0.02, 0.36, 'F'); // Adjust rectangle size as needed
+  doc.setTextColor("#000");
 
-    // Set font size and color for the text
-    doc.setFontSize(fontSize);
-    doc.setTextColor('#fff'); // Example: Black color
+  doc.setFont("", "bold");
+  doc.text("Thank you for business with us!", 1, nextSectionY + 1);
 
-    // Add the text on top of the rectangle
-    doc.text(t, xPos, nextSectionY + 0.4);
-    doc.text('12345.00 \u20B9', 6.5, nextSectionY + 0.4);
-
-    doc.setTextColor('#000');
-
-    doc.setFont("", "bold")
-    doc.text("Thank you for business with us!", 1, nextSectionY + 1)
-
-    doc.save('a4.pdf');
+  doc.save(`${item.clientName}.pdf`);
 };
 
 const generateThermalPDF = () => {
-    const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'in',
-        format: [2, 4] // Example thermal printer size in inches (portrait)
-    });
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "in",
+    format: [2, 4], // Example thermal printer size in inches (portrait)
+  });
 
-    doc.text('Thermal Printer Size PDF Content', 0.1, 0.1); // Example content
-    doc.save('thermal.pdf');
+  doc.text("Thermal Printer Size PDF Content", 0.1, 0.1); // Example content
+  doc.save("thermal.pdf");
 };
 
 // Function to manually wrap text into lines based on specified width
 const getWrappedTextLines = (text, maxWidth) => {
-    const words = text.split(' ');
-    let currentLine = '';
-    const lines = [];
+  const words = text.split(" ");
+  let currentLine = "";
+  const lines = [];
 
-    words.forEach((word) => {
-        const potentialLine = currentLine ? `${currentLine} ${word}` : word;
-        const lineWidth = getStringWidth(potentialLine);
+  words.forEach((word) => {
+    const potentialLine = currentLine ? `${currentLine} ${word}` : word;
+    const lineWidth = getStringWidth(potentialLine);
 
-        if (lineWidth < maxWidth) {
-            currentLine = potentialLine;
-        } else {
-            lines.push(currentLine);
-            currentLine = word;
-        }
-    });
-
-    if (currentLine) {
-        lines.push(currentLine);
+    if (lineWidth < maxWidth) {
+      currentLine = potentialLine;
+    } else {
+      lines.push(currentLine);
+      currentLine = word;
     }
+  });
 
-    return lines;
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  return lines;
 };
 
 // Function to estimate string width (you may need to implement this based on your environment)
 const getStringWidth = (str) => {
-    // Implement the logic to estimate the width of the string here (e.g., using canvas, etc.)
-    // This logic depends on the environment and is just a placeholder
-    return str.length * 5; // Placeholder estimation, replace this with an actual width estimation logic
+  return str.length * 5;
 };
 
+const totalMoney = (data) => {
+  if (data) {
+    return data.reduce((sum, item) => {
+      return sum + item.amount;
+    }, 0);
+  }
+};
 
-const PDFGenerator = () => {
-    return (
-        <div>
-            <h1>Select PDF Size:</h1>
-            <button className='btn' onClick={generateA5PDF}>Download A5 PDF</button>
-            <button className='btn my-3' onClick={generateA4PDF}>Download A4 PDF</button>
-            <button className='btn' onClick={generateThermalPDF}>Download Thermal PDF</button>
-        </div>
-    );
+const totalCount = (data) => {
+  if (data) {
+    const totalQuantity = data.reduce((sum, item) => {
+      return sum + (item.quantity || 0);
+    }, 0);
+
+    return totalQuantity.toString();
+  }
+  return "0";
+};
+
+const PDFGenerator = (props) => {
+  const { saleData } = props;
+
+  const shop = JSON.parse(localStorage.getItem("userData"));
+  const img = localStorage.getItem(`profilePicture`);
+  const GSTIN = localStorage.getItem(`GSTIN`);
+  const add = JSON.parse(localStorage.getItem(`userAdd`));
+  return (
+    <div className="d-flex w-100 justify-content-between">
+      <div>
+        <p>Select & print invoice:</p>
+      </div>
+      <div className="d-flex gap-3">
+        <span
+          style={{ width: "20px", display: "inline-block" }}
+          onClick={() => generateA5PDF(saleData, shop, GSTIN, img, add)}
+        >
+          <img style={{ width: "100%" }} src={A5} alt="" />
+        </span>
+        <span
+          style={{ width: "20px", display: "inline-block" }}
+          onClick={() => generateA4PDF(saleData, shop, GSTIN, img, add)}
+        >
+          <img style={{ width: "100%" }} src={A4} alt="" />
+        </span>
+        {/* <span
+          style={{ width: "20px", display: "inline-block" }}
+          onClick={() => generateThermalPDF(saleData, shop, GSTIN, img, add)}
+        >
+          <img style={{ width: "100%" }} src={TP} alt="" />
+        </span> */}
+      </div>
+    </div>
+  );
 };
 
 export default PDFGenerator;

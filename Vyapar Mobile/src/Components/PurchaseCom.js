@@ -1,16 +1,16 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Dexie from 'dexie'
+import Dexie from "dexie";
 
-import TextField from '@mui/material/TextField';
-import Paper from '@mui/material/Paper';
-import Fab from '@mui/material/Fab';
-import RightArrow from "../images/arrow.png"
-import Add from "../images/add.png"
-import SaveIcon from '@mui/icons-material/Save';
+import TextField from "@mui/material/TextField";
+import Paper from "@mui/material/Paper";
+import Fab from "@mui/material/Fab";
+import RightArrow from "../images/arrow.png";
+import Add from "../images/add.png";
+import SaveIcon from "@mui/icons-material/Save";
 
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function PurchaseInvoice() {
   const navigate = useNavigate();
@@ -30,10 +30,10 @@ function PurchaseInvoice() {
   const [totalOriginalGSTAmount, setTotalGSTOriginalAmount] = useState(0);
   const [fractionalPart, setFractionalPart] = useState(0);
 
-
   const date = new Date();
-  const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
-
+  const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1)
+    .toString()
+    .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
 
   const [purchaseData, setPurchaseData] = useState({
     invoiceType: "GST",
@@ -41,7 +41,7 @@ function PurchaseInvoice() {
     billNum: "",
     payMode: "Cash",
     today: formattedDate,
-    purchaseItem: []
+    purchaseItem: [],
   });
 
   const [addedItems, setAddedItems] = useState({
@@ -68,33 +68,33 @@ function PurchaseInvoice() {
     tableDiv.current.scrollTop = tableDiv.current.scrollHeight;
   }, [addedItems]);
 
-
-
   // calculate discount and auto fill for sale amount
   useEffect(() => {
     const itemAmount = addedItems.quantity * addedItems.purchasePrice;
     if (addedItems.disc) {
       const discountedAmt = itemAmount - (itemAmount * addedItems.disc) / 100;
-      addedItems.disc == "100" || discountedAmt <= 0 ? addedItems.amount = 0 : addedItems.amount = Math.round(discountedAmt);
+      addedItems.disc == "100" || discountedAmt <= 0
+        ? (addedItems.amount = 0)
+        : (addedItems.amount = Math.round(discountedAmt));
       addedItems.amount = Math.round(discountedAmt);
       setIsZero(true);
-      setOriginalAmount(Math.round(discountedAmt))
+      setOriginalAmount(Math.round(discountedAmt));
     } else {
       setOriginalAmount(itemAmount);
       addedItems.amount = itemAmount;
       setIsZero(true);
     }
-
-  }, [addedItems.purchasePrice, addedItems.quantity, addedItems.disc, purchaseData.invoiceType]);
-
-
-
+  }, [
+    addedItems.purchasePrice,
+    addedItems.quantity,
+    addedItems.disc,
+    purchaseData.invoiceType,
+  ]);
 
   useEffect(() => {
     // Ensure addedItems.gst is a valid number
     const gstPercentage = parseFloat(addedItems.gst);
     if (purchaseData.invoiceType === "GST") {
-
       // Check if gstPercentage is a valid number between 0 and 100 (inclusive)
       if (!isNaN(gstPercentage) && gstPercentage >= 0 && gstPercentage <= 100) {
         const gstAmount = (originalAmount * gstPercentage) / 100;
@@ -103,7 +103,6 @@ function PurchaseInvoice() {
         // Update addedItems.amount and the state
         addedItems.amount = Math.round(newAmount);
       } else {
-
         addedItems.amount = Math.round(originalAmount);
       }
     } else {
@@ -111,15 +110,11 @@ function PurchaseInvoice() {
     }
   }, [addedItems.gst, originalAmount, purchaseData.invoiceType]);
 
-
-
-
   // const storeDB = new Dexie(`store_${user.name}`);
   const storeDB = new Dexie(`store`);
   storeDB.version(4).stores({
     items: "name", // collection with keyPath name and
-  })
-
+  });
 
   // auto suggest function
   const [store, setStore] = useState([]);
@@ -135,35 +130,29 @@ function PurchaseInvoice() {
     getStore();
   }, []);
 
-
-
-
   // Function to filter store based on input value
   const searchItemName = (value) => {
     const filteredItems = store.filter((item) =>
       item.name.toLowerCase().includes(value.toLowerCase())
-    ); searchItemName
+    );
+    searchItemName;
     setFilteredStore(filteredItems);
   };
-
-
 
   const saleItemChange = (event) => {
     if (event.target.name === "name") {
       setAddedItems({
         ...addedItems,
         [event.target.name]: event.target.value,
-      })
+      });
       searchItemName(event.target.value);
     } else {
       setAddedItems({
         ...addedItems,
         [event.target.name]: event.target.value,
-      })
+      });
     }
-  }
-
-
+  };
 
   const inputChange = (event) => {
     setPurchaseData({
@@ -172,38 +161,6 @@ function PurchaseInvoice() {
     });
   };
 
-
-
-
-
-  // const addSaleItem = () => {
-  //
-  //   if (addedItems.name && addedItems.quantity && addedItems.purchasePrice && isZero && purchaseData.supplierName) {
-  //     // setAddedItems([...addedItems, purchaseData]);
-  //     const updatedSaleItem = [...purchaseData.purchaseItem];
-  //     updatedSaleItem.push(addedItems);
-  //
-  //     setPurchaseData(prevData => ({
-  //       ...prevData,
-  //       purchaseItem: updatedSaleItem
-  //     }));
-  //
-  //     setAddedItems(prevData => ({
-  //       ...prevData,
-  //       name: "",
-  //       quantity: "",
-  //       purchasePrice: "",
-  //       salePrice: "",
-  //       disc: "",
-  //       amount: ""
-  //     }));
-  //
-  //   } else {
-  //     toast.error("require fields are not empty");
-  //   }
-  // };
-
-  
   const addSaleItem = () => {
     if (
       addedItems.name &&
@@ -213,34 +170,34 @@ function PurchaseInvoice() {
       purchaseData.supplierName
     ) {
       const existingItemIndex = purchaseData.purchaseItem.findIndex(
-        item => item.name === addedItems.name
+        (item) => item.name === addedItems.name
       );
 
       if (existingItemIndex !== -1) {
-        const updatedPurchaseItem = purchaseData.purchaseItem.map(item => {
+        const updatedPurchaseItem = purchaseData.purchaseItem.map((item) => {
           if (item.name === addedItems.name) {
             return {
               ...item,
-              quantity: parseFloat(item.quantity) + parseFloat(addedItems.quantity),
+              quantity:
+                parseFloat(item.quantity) + parseFloat(addedItems.quantity),
               // Update other properties if needed
             };
           }
           return item;
         });
 
-        setPurchaseData(prevData => ({
+        setPurchaseData((prevData) => ({
           ...prevData,
           purchaseItem: updatedPurchaseItem,
         }));
       } else {
         // If the item doesn't exist, add it to the purchaseItem array
-        setPurchaseData(prevData => ({
+        setPurchaseData((prevData) => ({
           ...prevData,
           purchaseItem: [...prevData.purchaseItem, addedItems],
         }));
       }
 
-      // Reset addedItems fields
       setAddedItems({
         name: "",
         quantity: "",
@@ -254,31 +211,17 @@ function PurchaseInvoice() {
     }
   };
 
-
-
-
-
   // const db = new Dexie(`purchase_${user.name}`);
   const db = new Dexie(`purchase`);
-
-  // Define the schema including the new collection
   db.version(4).stores({
-    // itemData: 'productName', // Existing collection
-    purchaseData: '++id,billNum,supplierName,date', // New collection
+    purchaseData: "++id,today,billNum,supplierName,date",
   });
-
-
-
 
   // const dailyPurchase = new Dexie(`dailyPurchase_${user.name}`);
   const dailyPurchase = new Dexie(`dailyPurchase`);
   dailyPurchase.version(5).stores({
-    purchases: '++id,supplierName', //'++id' is an auto-incremented unique identifier
+    purchases: "++id,today,supplierName",
   });
-
-
-
-
 
   const savePurchase = async () => {
     if (purchaseData.purchaseItem.length > 0) {
@@ -288,86 +231,89 @@ function PurchaseInvoice() {
         await dailyPurchase.purchases.add(purchaseData);
 
         // Map and add all objects from purchaseData.purchaseItem to storeDB
-        await Promise.all(purchaseData.purchaseItem.map(async item => {
-          try {
-            if (item.name && item.quantity && item.purchasePrice) {
-              const itemNameLowerCase = item.name.toLowerCase();
-              const existingItem = await storeDB.items.get(itemNameLowerCase);
-              if (existingItem) {
-                // If the item exists, update its quantity by adding the new quantity
-                existingItem.quantity = Number(existingItem.quantity) + Number(item.quantity);
-                existingItem.purchasePrice = item.purchasePrice;
-                existingItem.salePrice = item.salePrice;
-                existingItem.unit = item.unit;
-                await storeDB.items.put(existingItem);
+        await Promise.all(
+          purchaseData.purchaseItem.map(async (item) => {
+            try {
+              if (item.name && item.quantity && item.purchasePrice) {
+                const itemNameLowerCase = item.name.toLowerCase();
+                const existingItem = await storeDB.items.get(itemNameLowerCase);
+                if (existingItem) {
+                  // If the item exists, update its quantity by adding the new quantity
+                  existingItem.quantity =
+                    Number(existingItem.quantity) + Number(item.quantity);
+                  existingItem.purchasePrice = item.purchasePrice;
+                  existingItem.salePrice = item.salePrice;
+                  existingItem.unit = item.unit;
+                  await storeDB.items.put(existingItem);
+                } else {
+                  // If the item doesn't exist, create a new record
+                  const storeData = {
+                    name: itemNameLowerCase,
+                    quantity: item.quantity,
+                    salePrice: item.salePrice,
+                    purchasePrice: item.purchasePrice,
+                    unit: item.unit,
+                  };
+                  await storeDB.items.put(storeData);
+                }
               } else {
-                // If the item doesn't exist, create a new record
-                const storeData = {
-                  name: itemNameLowerCase,
-                  quantity: item.quantity,
-                  salePrice: item.salePrice,
-                  purchasePrice: item.purchasePrice,
-                  unit: item.unit,
-                };
-                await storeDB.items.put(storeData);
+                toast.warn(
+                  "Please fill in all required fields for the purchase item."
+                );
               }
-            } else {
-              toast.warn('Please fill in all required fields for the purchase item.');
+            } catch (error) {
+              console.error("Error adding/updating item in storeDB:", error);
+              toast.error(
+                "Error adding/updating item in storeDB: " + error.message
+              );
             }
-          } catch (error) {
-            console.error('Error adding/updating item in storeDB:', error);
-            toast.error('Error adding/updating item in storeDB: ' + error.message);
-          }
-        }));
+          })
+        );
 
         // Clear purchaseData after successful addition
-        setPurchaseData(prevPurchaseData => ({
+        setPurchaseData((prevPurchaseData) => ({
           ...prevPurchaseData,
-          purchaseItem: []
+          purchaseItem: [],
         }));
 
-        toast.success('Purchase data Saved successfully');
+        toast.success("Purchase data Saved successfully");
       } catch (error) {
-        console.error('Error adding purchase data:', error);
-        toast.error('Error adding purchase data: ' + error.message);
+        console.error("Error adding purchase data:", error);
+        toast.error("Error adding purchase data: " + error.message);
       }
     } else {
-      toast.warn('Add Sale Details');
+      toast.warn("Add Sale Details");
     }
   };
-
-
-
 
   const handleDeleteItem = (index) => {
     const updatedItems = [...purchaseData.purchaseItem];
     updatedItems.splice(index, 1); // Remove the item at the specified index
-    setPurchaseData(prevData => ({
+    setPurchaseData((prevData) => ({
       ...prevData,
-      purchaseItem: updatedItems // Update purchaseItem without wrapping in an extra array
+      purchaseItem: updatedItems, // Update purchaseItem without wrapping in an extra array
     }));
   };
-
-
-
-
 
   // Function to handle item selection
   const handleItemClick = (item) => {
-    setAddedItems({ ...addedItems, name: item.name, purchasePrice: item.purchasePrice, salePrice: item.salePrice });
-    setFilteredStore([])
+    setAddedItems({
+      ...addedItems,
+      name: item.name,
+      purchasePrice: item.purchasePrice,
+      salePrice: item.salePrice,
+    });
+    setFilteredStore([]);
   };
 
-
   const handleNewInvoice = () => {
-    setPurchaseData(prevData => ({
+    setPurchaseData((prevData) => ({
       ...prevData,
       supplierName: "",
       billNum: "",
-      purchaseItem: []
-
+      purchaseItem: [],
     }));
-    setAddedItems(prevData => ({
+    setAddedItems((prevData) => ({
       ...prevData,
       name: "",
       quantity: "",
@@ -376,14 +322,8 @@ function PurchaseInvoice() {
       disc: "",
       amount: "",
       date: "",
-    }))
-  }
-
-
-
-
-
-
+    }));
+  };
 
   return (
     <>
@@ -400,12 +340,11 @@ function PurchaseInvoice() {
         theme="dark"
       />
       <div className="sale-content-parentdiv">
-
         <Paper
           sx={{
             padding: "11px",
           }}
-          className='nav-paper'
+          className="nav-paper"
         >
           <div className="user-paper">
             <span className="back" onClick={() => navigate(-1)}>
@@ -419,7 +358,7 @@ function PurchaseInvoice() {
         </Paper>
 
         <div className="user-info">
-          {GSTIN &&
+          {GSTIN && (
             <div>
               <select
                 onChange={inputChange}
@@ -432,7 +371,7 @@ function PurchaseInvoice() {
                 <option value="GST">GST</option>
               </select>
             </div>
-          }
+          )}
 
           <div>
             <TextField
@@ -443,7 +382,7 @@ function PurchaseInvoice() {
               onChange={inputChange}
               className="w-100"
               InputLabelProps={{
-                style: { paddingLeft: '10px' } // Adjust the padding value as needed
+                style: { paddingLeft: "10px" }, // Adjust the padding value as needed
               }}
             />
             {/* <input type="text" name="supplierName" id="supplierName" value={purchaseData.supplierName} onChange={nameSuppHandle} /> */}
@@ -458,19 +397,22 @@ function PurchaseInvoice() {
                 name="date"
                 className="date"
                 style={{ width: "120px" }}
-              // max={currentDate}
+                // max={currentDate}
               />
             </div>
 
             <div>
-              <input type="number" name="billNum" className="billNum" value={purchaseData.billNum} onChange={inputChange} placeholder="Bill no." />
+              <input
+                type="number"
+                name="billNum"
+                className="billNum"
+                value={purchaseData.billNum}
+                onChange={inputChange}
+                placeholder="Bill no."
+              />
             </div>
-
           </div>
-
         </div>
-
-
 
         <div className="item-section mb-5">
           <div className="position-relative">
@@ -483,14 +425,19 @@ function PurchaseInvoice() {
               value={addedItems.name}
               onChange={saleItemChange}
               InputLabelProps={{
-                style: { paddingLeft: '10px' } // Adjust the padding value as needed
+                style: { paddingLeft: "10px" }, // Adjust the padding value as needed
               }}
             />
             <div className="result_item">
               {/* Display the filtered results as a list of names */}
               <ul className="list-group">
                 {filteredStore.map((item) => (
-                  <li className="list-group-item" style={{ padding: "12px", textTransform: "capitalize" }} key={item.name} onClick={() => handleItemClick(item)}>
+                  <li
+                    className="list-group-item"
+                    style={{ padding: "12px", textTransform: "capitalize" }}
+                    key={item.name}
+                    onClick={() => handleItemClick(item)}
+                  >
                     {item.name}
                   </li>
                 ))}
@@ -544,7 +491,7 @@ function PurchaseInvoice() {
             </div>
           </div>
 
-          <div className="fields-inp" >
+          <div className="fields-inp">
             <div className="input-fileds">
               <input
                 onChange={saleItemChange}
@@ -582,7 +529,7 @@ function PurchaseInvoice() {
                 placeholder=" Discount %"
               />
             </div>
-            {GSTIN &&
+            {GSTIN && (
               <div className="input-fileds">
                 <span className="percent-div"> GST%</span>
                 <input
@@ -595,28 +542,31 @@ function PurchaseInvoice() {
                   disabled={purchaseData.invoiceType === "NoGST"}
                 />
               </div>
-            }
+            )}
           </div>
         </div>
-        {addedItems.amount > 0 &&
+        {addedItems.amount > 0 && (
           <div className="d-flex justify-content-center mb-5">
             <Fab
               sx={{
                 width: "90%",
                 height: "40px",
                 display: "flex",
-                justifyContent: "space-between"
+                justifyContent: "space-between",
               }}
               onClick={addSaleItem}
-              variant="extended">
-              <div className="ms-4 fw-bold"> {addedItems.amount ? addedItems.amount : ''} </div>
+              variant="extended"
+            >
+              <div className="ms-4 fw-bold">
+                {" "}
+                {addedItems.amount ? addedItems.amount : ""}{" "}
+              </div>
               <div style={{ width: "33px" }}>
                 <img className="w-100" src={RightArrow} alt="" />
               </div>
-
             </Fab>
           </div>
-        }
+        )}
 
         {/* div for spacing */}
         <div className="d-block space-div "></div>
@@ -650,12 +600,16 @@ function PurchaseInvoice() {
                   <td>{item.amount}</td>
                   <td>
                     {/* Add the delete button (X) and call handleDeleteItem with the item's index */}
-                    <button className="border border-light bg-danger text-light" onClick={() => handleDeleteItem(index)}>X</button>
+                    <button
+                      className="border border-light bg-danger text-light"
+                      onClick={() => handleDeleteItem(index)}
+                    >
+                      X
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
-
           </table>
         </div>
 
@@ -676,7 +630,6 @@ function PurchaseInvoice() {
                 <option value="Bank">Bank Transfer</option>
               </select>
             </div>
-
           </div>
 
           <div className="print-save mt-5">
@@ -688,8 +641,6 @@ function PurchaseInvoice() {
               <div>GRAND TOTAL</div>
               <div>{grandTotal ? grandTotal : "0.00"}</div>
             </div>
-
-
           </div>
           <div className="text-center my-3">
             <Fab
@@ -698,17 +649,15 @@ function PurchaseInvoice() {
                 margin: "10px 0",
                 width: "50%",
                 zIndex: "1",
-
               }}
               onClick={savePurchase}
-              variant="extended">
+              variant="extended"
+            >
               <SaveIcon sx={{ mr: 2 }} />
               Save
             </Fab>
           </div>
         </div>
-
-
       </div>
     </>
   );

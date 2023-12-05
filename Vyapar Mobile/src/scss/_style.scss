@@ -837,7 +837,7 @@ select {
 }
 
 .clent-quote {
-  font-size: 19px;
+  font-size: 17px;
   color: teal;
   font-weight: bolder;
 }
@@ -855,11 +855,11 @@ select {
 .tot-price {
   background-color: teal;
   color: white;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: bolder;
-  margin-top: 15px;
+  margin-top: 10px;
   border-radius: 10px;
-  padding: 10px;
+  padding: 5px;
 }
 
 .filter-history {
@@ -1003,4 +1003,10 @@ select {
   font-size: 25px;
   background: transparent;
   color: #fff;
+}
+.css-1doeaa1-MuiInputBase-root-MuiInput-root::before{
+  border:none !important;
+}
+.css-1doeaa1-MuiInputBase-root-MuiInput-root::after{
+  border:none !important;
 }
