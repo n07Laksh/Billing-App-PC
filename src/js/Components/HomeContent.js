@@ -45,7 +45,6 @@ const HomeContent = () => {
   // Create Dexie database
   const saleDB = new Dexie(`sale_${user.name}`);
 
-  // Define the schema including the new collection
   saleDB.version(4).stores({
     saleItems: "++id,today,clientName", // Include necessary properties
   });
@@ -55,7 +54,7 @@ const HomeContent = () => {
     async function retrieveAllItems() {
       try {
         const items = await saleDB.saleItems.toArray();
-        return items;
+        return items.reverse();
       } catch (error) {
         return [];
       }
@@ -166,6 +165,7 @@ const HomeContent = () => {
                     sx={{
                       mt: 1,
                     }}
+                    key={index}
                     expanded={expanded === `panel${index + 1}`}
                     onChange={handleChange(`panel${index + 1}`)}
                   >
@@ -219,7 +219,7 @@ const HomeContent = () => {
                 color:"white",
                 padding:"10px",
               }}>
-                Total Amount : {"   " + totalMoney(openItem.saleItem)}₹
+                Total Amount : <span style={{fontSize:"18px", fontWeight:"bolder", marginLeft:"20px"}}>{"   " + totalMoney(openItem.saleItem)}</span>₹
               </Typography>
             </Box>
           </Fade>
@@ -232,7 +232,7 @@ const HomeContent = () => {
             <div className="history-text p-2">Sale History ...</div>
 
             <div className="list-group">
-              {totalSale.reverse().map((item, index) => (
+              {totalSale.map((item, index) => (
                 <a
                   onClick={() => handleOpen(item)}
                   key={index}

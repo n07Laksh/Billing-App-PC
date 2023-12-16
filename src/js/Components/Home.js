@@ -1,19 +1,16 @@
-import React from 'react'
-import Balance from './Balance'
-import HomeContent from './HomeContent'
-// import UpdateDB from './UpdateDB'
+import React from "react";
+import Balance from "./Balance";
+import HomeContent from "./HomeContent";
 
 const Home = () => {
   return (
     <>
-    <div className="main">
-    
-        <Balance/>
+      <div className="main">
+        <Balance />
         <HomeContent />
-        {/* <UpdateDB /> */}
-        </div>
+      </div>
     </>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;

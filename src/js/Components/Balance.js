@@ -13,22 +13,23 @@ const Balance = () => {
 
   // Create Dexie database
   const saleDB = new Dexie(`sale_${user.name}`);
-  // Define the schema including the new collection
   saleDB.version(4).stores({
-    saleItems: "++id,today,clientName", // Include necessary properties
+    saleItems: "++id,today,clientName",
   });
 
   const purchaseDB = new Dexie(`purchase_${user.name}`);
-  // Define the schema including the new collection
   purchaseDB.version(4).stores({
-    purchaseData: "++id,today", // New collection
+    purchaseData: "++id,today",
   });
 
   useEffect(() => {
     async function retrieveItemsForCurrentDate(db) {
-
-      const now = new Date(); 
-      const currentDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().substr(0, 10);
+      const now = new Date();
+      const currentDate = new Date(
+        now.getTime() - now.getTimezoneOffset() * 60000
+      )
+        .toISOString()
+        .substr(0, 10);
 
       try {
         const items = await db.where("today").equals(currentDate).toArray();

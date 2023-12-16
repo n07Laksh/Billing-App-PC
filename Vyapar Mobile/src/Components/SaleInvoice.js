@@ -5,18 +5,32 @@ import CustomerDetails from "./CustomerDetails";
 import SaleDetails from "./SaleDetails";
 import Dexie from "dexie";
 
-import Paper from '@mui/material/Paper';
-import Fab from '@mui/material/Fab';
-import RightArrow from "../images/arrow.png"
-import Add from "../images/add.png"
-import PrintIcon from '@mui/icons-material/Print';
+import Paper from "@mui/material/Paper";
+import Fab from "@mui/material/Fab";
+import RightArrow from "../images/arrow.png";
+import Add from "../images/add.png";
+import PrintIcon from "@mui/icons-material/Print";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Modal from "@mui/material/Modal";
 
-import { ToastContainer, toast } from 'react-toastify';
+const style = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: "90%",
+  bgcolor: "background.paper",
+  boxShadow: 24,
+  p: 4,
+  borderRadius: "15px",
+};
 
-import TextField from '@mui/material/TextField';
+import { ToastContainer, toast } from "react-toastify";
 
-import 'react-toastify/dist/ReactToastify.css';
+import TextField from "@mui/material/TextField";
 
+import "react-toastify/dist/ReactToastify.css";
 
 function SaleInvoice() {
   const navigate = useNavigate();
@@ -32,7 +46,9 @@ function SaleInvoice() {
   const [soldQuantitie, setSoldQuantitie] = useState({});
 
   const date = new Date();
-  const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
+  const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1)
+    .toString()
+    .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
 
   const [saleData, setSaleData] = useState({
     invoiceType: "GST",
@@ -42,7 +58,7 @@ function SaleInvoice() {
     clientAddress: "",
     payMode: "Cash",
     today: formattedDate,
-    saleItem: []
+    saleItem: [],
   });
   const [addedItems, setAddedItems] = useState({
     name: "",
@@ -52,9 +68,8 @@ function SaleInvoice() {
     disc: "",
     gst: GSTIN ? 18 : 0,
     amount: "",
-    date: "",
+    date: formattedDate,
   });
-
 
   useEffect(() => {
     // Calculate total based on updated addedItems
@@ -64,31 +79,35 @@ function SaleInvoice() {
     setTotal(newTotal);
     setGrandTotal(newTotal);
 
-    tableDiv.current.scrollTop = tableDiv.current.scrollHeight;
   }, [addedItems, saleData]);
-  const tableDiv = useRef(); // table parent div
 
   // calculate discount and auto fill for sale amount
   useEffect(() => {
     const itemAmount = addedItems.quantity * addedItems.salePrice;
     if (addedItems.disc) {
       const discountedAmt = itemAmount - (itemAmount * addedItems.disc) / 100;
-      addedItems.disc == "100" || discountedAmt <= 0 ? addedItems.amount = 0 : addedItems.amount = Math.round(discountedAmt);
+      addedItems.disc == "100" || discountedAmt <= 0
+        ? (addedItems.amount = 0)
+        : (addedItems.amount = Math.round(discountedAmt));
       addedItems.amount = Math.round(discountedAmt);
       setIsZero(true);
-      setOriginalAmount(Math.round(discountedAmt))
+      setOriginalAmount(Math.round(discountedAmt));
     } else {
       setOriginalAmount(itemAmount);
       addedItems.amount = itemAmount;
       setIsZero(true);
     }
-  }, [addedItems.salePrice, addedItems.quantity, addedItems.disc, saleData.invoiceType,]);
+  }, [
+    addedItems.salePrice,
+    addedItems.quantity,
+    addedItems.disc,
+    saleData.invoiceType,
+  ]);
 
   useEffect(() => {
     // Ensure purchaseData.gst is a valid number
     const gstPercentage = parseFloat(addedItems.gst);
     if (saleData.invoiceType === "GST") {
-
       // Check if gstPercentage is a valid number between 0 and 100 (inclusive)
       if (!isNaN(gstPercentage) && gstPercentage >= 0 && gstPercentage <= 100) {
         // Calculate the GST amount
@@ -97,24 +116,19 @@ function SaleInvoice() {
         // Calculate the new total with GST
         const newAmount = originalAmount + gstAmount;
 
-        // Update purchaseData.amount and the state
         addedItems.amount = Math.round(newAmount);
       } else {
         addedItems.amount = Math.round(originalAmount);
-        // Handle the case where the GST percentage is invalid
       }
     } else {
       addedItems.gst = 0;
     }
   }, [addedItems.gst, originalAmount, saleData.invoiceType]);
 
-
-
-  // const storeDB = new Dexie(`store_${user.name}`);
-  const storeDB = new Dexie(`store`);
+  const storeDB = new Dexie(`store_${user.name}`);
   storeDB.version(4).stores({
-    items: "name", // collection with keyPath name and
-  })
+    items: "name",
+  });
 
   // auto suggest function
   const [store, setStore] = useState([]);
@@ -129,7 +143,6 @@ function SaleInvoice() {
     getStore();
   }, []);
 
-
   const inputChange = (event) => {
     setSaleData({
       ...saleData,
@@ -137,14 +150,12 @@ function SaleInvoice() {
     });
   };
 
-
   // Function to filter store based on input value
   const searchItemName = (value) => {
     if (value.length > 0) {
       const filteredItems = store.filter((item) =>
         item.name.toLowerCase().includes(value.toLowerCase())
       );
-      console.log("filteredItems", filteredItems)
       setFilteredStore(filteredItems);
     } else {
       setFilteredStore([]);
@@ -156,44 +167,48 @@ function SaleInvoice() {
       setAddedItems({
         ...addedItems,
         [event.target.name]: event.target.value,
-      })
+      });
       searchItemName(event.target.value);
     } else {
       setAddedItems({
         ...addedItems,
         [event.target.name]: event.target.value,
-      })
+      });
     }
-  }
-
+  };
 
   const [allItem, setAllItems] = useState(null);
   useEffect(() => {
     const allAvailItems = async () => {
       return await storeDB.items.toArray();
-    }
+    };
     allAvailItems().then((data) => {
-      setAllItems(data)
+      setAllItems(data);
     });
-  }, [])
-
-
+  }, []);
 
   const addSaleItem = async () => {
     const { name, quantity, salePrice, amount } = addedItems;
 
     if (name && quantity && salePrice && isZero && saleData.clientName) {
       const itemName = name.toLowerCase();
-      const existingQuantity = parseFloat(allItem.find(item => item.name.toLowerCase() === itemName)?.quantity) || 0;
-      const itemIndex = allItem.findIndex(item => item.name.toLowerCase() === itemName);
+      const existingQuantity =
+        parseFloat(
+          allItem.find((item) => item.name.toLowerCase() === itemName)?.quantity
+        ) || 0;
+      const itemIndex = allItem.findIndex(
+        (item) => item.name.toLowerCase() === itemName
+      );
       const soldQuantity = parseFloat(quantity);
 
       if (existingQuantity > 0) {
         if (existingQuantity >= soldQuantity) {
           if (itemIndex !== -1) {
-            allItem[itemIndex].quantity = (existingQuantity - soldQuantity);
+            allItem[itemIndex].quantity = existingQuantity - soldQuantity;
             const updatedSaleItem = [...saleData.saleItem];
-            const existingItemIndex = updatedSaleItem.findIndex(item => item.name.toLowerCase() === itemName);
+            const existingItemIndex = updatedSaleItem.findIndex(
+              (item) => item.name.toLowerCase() === itemName
+            );
 
             if (existingItemIndex !== -1) {
               // Update the existing item quantity by adding the new quantity
@@ -203,25 +218,25 @@ function SaleInvoice() {
               // Add the new item if not found
               updatedSaleItem.push({
                 ...addedItems,
-                quantity: soldQuantity // Set the new quantity
+                quantity: soldQuantity, // Set the new quantity
               });
             }
 
             // Update saleData with the modified saleItem array
-            setSaleData(prevSaleData => ({
+            setSaleData((prevSaleData) => ({
               ...prevSaleData,
-              saleItem: updatedSaleItem
+              saleItem: updatedSaleItem,
             }));
           }
 
           // Update soldQuantitie with sold quantities for each item
-          setSoldQuantitie(prevSoldQuantitie => ({
+          setSoldQuantitie((prevSoldQuantitie) => ({
             ...prevSoldQuantitie,
-            [itemName]: (prevSoldQuantitie[itemName] || 0) + soldQuantity
+            [itemName]: (prevSoldQuantitie[itemName] || 0) + soldQuantity,
           }));
 
           // Clear input fields
-          setAddedItems(prevData => ({
+          setAddedItems((prevData) => ({
             ...prevData,
             name: "",
             quantity: "",
@@ -229,7 +244,6 @@ function SaleInvoice() {
             disc: "",
             amount: "",
           }));
-
         } else {
           toast.error(`Error: Not enough ${itemName}(s) in stock.`);
           return; // Exit the function if any item is not available
@@ -243,31 +257,23 @@ function SaleInvoice() {
     }
   };
 
-
-
-
-
-  // const db = new Dexie(`sale_${user.name}`);
-  const db = new Dexie(`sale`);
+  const db = new Dexie(`sale_${user.name}`);
 
   // Define the schema including the new collection
   db.version(4).stores({
-    saleItems: '++id,today,clientName,date', // New collection
+    saleItems: "++id,today,clientName,date", // New collection
   });
 
-  // const dailySale = new Dexie(`dailySale_${user.name}`);
-  const dailySale = new Dexie(`dailySale`);
+  const dailySale = new Dexie(`dailySale_${user.name}`);
   dailySale.version(5).stores({
-    sales: '++id,clientName', //'++id' is an auto-incremented unique identifier
+    sales: "++id,clientName",
   });
-
-
 
   // Define the handleSale function
   const handleSale = async (salesItems) => {
     try {
       // Update the store items with the new quantities
-      await storeDB.transaction('rw', storeDB.items, async () => {
+      await storeDB.transaction("rw", storeDB.items, async () => {
         for (const itemName in salesItems) {
           const existingItem = await storeDB.items.get(itemName);
           existingItem.quantity -= salesItems[itemName];
@@ -281,10 +287,9 @@ function SaleInvoice() {
       //   // toast.success(`Sold ${remainingQuantity} ${itemName}(s).`);
       // }
     } catch (error) {
-      toast.error('Error handling sale:', error);
+      toast.error("Error handling sale:", error);
     }
   };
-
 
   const updateItemInDB = async (item) => {
     try {
@@ -297,17 +302,16 @@ function SaleInvoice() {
     }
   };
 
-
-
   const savePrint = async () => {
-    if (saleData.saleItem.length > 0) { // Assuming saleItem is a single object
+    if (saleData.saleItem.length > 0) {
+      // Assuming saleItem is a single object
       const result = await updateItemInDB(saleData);
 
       if (result) {
         // Update successful, perform actions here
         handleSale(soldQuantitie);
 
-        toast.success('Item Saved Successfully!');
+        toast.success("Item Saved Successfully!");
         setAddedItems([]);
         setDiscountAmount(null);
         setSaleData({
@@ -317,48 +321,47 @@ function SaleInvoice() {
           clientContact: "",
           clientAddress: "",
           today: formattedDate,
-          saleItem: []
+          saleItem: [],
         });
-
       } else {
-        toast.error('Error adding item');
+        toast.error("Error adding item");
       }
     } else {
-      toast.warn('Add Sale Details');
+      toast.warn("Add Sale Details");
     }
   };
-
-
 
   // Function to delete an item from saleItem by index
   const handleDeleteItem = (index) => {
     const updatedItems = [...saleData.saleItem];
     updatedItems.splice(index, 1); // Remove the item at the specified index
-    setSaleData(prevData => ({
+    setSaleData((prevData) => ({
       ...prevData,
-      saleItem: updatedItems // Update saleItem without wrapping in an extra array
+      saleItem: updatedItems, // Update saleItem without wrapping in an extra array
     }));
   };
 
-
-
   // Function to handle item selection
   const handleItemClick = (item) => {
-    setAddedItems({ ...addedItems, name: item.name, salePrice: item.salePrice ? item.salePrice : item.purchasePrice, unit: item.unit });
-    setFilteredStore([])
+    setAddedItems({
+      ...addedItems,
+      name: item.name,
+      salePrice: item.salePrice ? item.salePrice : item.purchasePrice,
+      unit: item.unit,
+    });
+    setFilteredStore([]);
   };
 
   const handleNewInvoice = () => {
-    setSaleData(prevData => ({
+    setSaleData((prevData) => ({
       ...prevData,
       invoiceNum: "",
       clientName: "",
       clientContact: "",
       clientAddress: "",
-      saleItem: []
-
+      saleItem: [],
     }));
-    setAddedItems(prevData => ({
+    setAddedItems((prevData) => ({
       ...prevData,
       name: "",
       quantity: "",
@@ -366,8 +369,16 @@ function SaleInvoice() {
       disc: "",
       amount: "",
       date: "",
-    }))
-  }
+    }));
+  };
+
+  const [selectItem, setSelectItem] = useState(null);
+  const [open, setOpen] = React.useState(false);
+  const handleOpen = (itm) => {
+    setSelectItem(itm);
+    setOpen(true);
+  };
+  const handleClose = () => setOpen(false);
 
   return (
     <>
@@ -380,8 +391,57 @@ function SaleInvoice() {
         pauseOnFocusLoss
         draggable={true}
         theme="dark"
-
       />
+      {selectItem && (
+        <div>
+          <Modal
+            open={open}
+            onClose={handleClose}
+            aria-labelledby="modal-modal-title"
+            aria-describedby="modal-modal-description"
+          >
+            <Box sx={style}>
+              <Typography id="modal-modal-title" variant="h6" component="h2">
+                <div className="">
+                  <div className="modal-itm-name text-capitalize">{selectItem.name}</div>
+                </div>
+              </Typography>
+              <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+                <div>
+                  <div className="modal-view-details">
+                    <div>Sale price</div>
+                    <div>{selectItem.salePrice}₹</div>
+                  </div>
+                  <div className="modal-view-details">
+                    <div>Quantity</div>
+                    <div>
+                      {selectItem.quantity} {selectItem.unit}
+                    </div>
+                  </div>
+                  <div className="modal-view-details">
+                    <div>Discount</div>
+                    <div>{selectItem.disc ? selectItem.disc + "%" : "0%"}</div>
+                  </div>
+                  <div className="modal-view-details">
+                    <div>GST</div>
+                    <div>{selectItem.gst ? selectItem.gst + "%" : "0%"}</div>
+                  </div>
+                  <div className="modal-view-details">
+                    <div>Date</div>
+                    <div>{selectItem.date}</div>
+                  </div>
+
+                  <div className="modal-view-details amt">
+                    <div>Amount</div>
+                    <div className="fw-bolder">{selectItem.amount}</div>
+                  </div>
+                </div>
+              </Typography>
+            </Box>
+          </Modal>
+        </div>
+      )}
+
       <div className="sale-content-parentdiv">
         <div className="print-show">
           <div className="invoice text-center">
@@ -394,14 +454,13 @@ function SaleInvoice() {
             <div className="print-detail">
               <CustomerDetails />
             </div>
-
           </div>
         </div>
         <Paper
           sx={{
             padding: "11px",
           }}
-          className='nav-paper'
+          className="nav-paper"
         >
           <div className="user-paper">
             <span className="back" onClick={() => navigate(-1)}>
@@ -415,7 +474,7 @@ function SaleInvoice() {
         </Paper>
 
         <div className="user-info">
-          {GSTIN &&
+          {GSTIN && (
             <div>
               <label htmlFor="invoiceType" className="lable-txt">
                 Invoice Type
@@ -432,12 +491,18 @@ function SaleInvoice() {
                 <option value="GST">GST</option>
               </select>
             </div>
-          }
+          )}
 
           <div className="user-inputs">
-
             <div>
-              <input type="text" className="invoice-no" name="invoiceNum" value={saleData.invoiceNum} onChange={inputChange} placeholder="Invoice No." />
+              <input
+                type="text"
+                className="invoice-no"
+                name="invoiceNum"
+                value={saleData.invoiceNum}
+                onChange={inputChange}
+                placeholder="Invoice No."
+              />
             </div>
 
             <div>
@@ -464,7 +529,7 @@ function SaleInvoice() {
               value={saleData.clientName}
               className="w-100"
               InputLabelProps={{
-                style: { paddingLeft: '10px' } // Adjust the padding value as needed
+                style: { paddingLeft: "10px" }, // Adjust the padding value as needed
               }}
             />
           </div>
@@ -479,7 +544,7 @@ function SaleInvoice() {
               value={saleData.clientContact}
               className="w-100"
               InputLabelProps={{
-                style: { paddingLeft: '10px' } // Adjust the padding value as needed
+                style: { paddingLeft: "10px" }, // Adjust the padding value as needed
               }}
             />
           </div>
@@ -494,11 +559,10 @@ function SaleInvoice() {
               value={saleData.clientAddress}
               className="w-100"
               InputLabelProps={{
-                style: { paddingLeft: '10px' } // Adjust the padding value as needed
+                style: { paddingLeft: "10px" }, // Adjust the padding value as needed
               }}
             />
           </div>
-
         </div>
 
         <div className="item-section mb-5">
@@ -512,14 +576,19 @@ function SaleInvoice() {
               className="w-100"
               value={addedItems.name}
               InputLabelProps={{
-                style: { paddingLeft: '10px',textTransform:"capitalize" } // Adjust the padding value as needed
+                style: { paddingLeft: "10px", textTransform: "capitalize" }, // Adjust the padding value as needed
               }}
             />
             <div className="result_item">
               {/* Display the filtered results as a list of names */}
               <ul className="list-group">
                 {filteredStore.map((item) => (
-                  <li className="list-group-item" style={{ padding: "12px", textTransform: "capitalize" }} key={item.name} onClick={() => handleItemClick(item)}>
+                  <li
+                    className="list-group-item"
+                    style={{ padding: "12px", textTransform: "capitalize" }}
+                    key={item.name}
+                    onClick={() => handleItemClick(item)}
+                  >
                     {item.name}
                   </li>
                 ))}
@@ -529,7 +598,13 @@ function SaleInvoice() {
 
           <div>
             <div>
-              <select className="unit-select" onChange={saleItemChange} d="unit" name="unit" value={addedItems.unit}    >
+              <select
+                className="unit-select"
+                onChange={saleItemChange}
+                d="unit"
+                name="unit"
+                value={addedItems.unit}
+              >
                 <option value="NO">None</option>
                 <option value="BG">Bag (BG)</option>
                 <option value="BTL">Bottle (BTL)</option>
@@ -577,14 +652,12 @@ function SaleInvoice() {
               className="w-100 sale-price"
               value={addedItems.salePrice}
               InputLabelProps={{
-                style: { paddingLeft: '10px' } // Adjust the padding value as needed
+                style: { paddingLeft: "10px" }, // Adjust the padding value as needed
               }}
             />
           </div>
           <div>
-
             <div>
-
               <input
                 onChange={saleItemChange}
                 type="number"
@@ -595,7 +668,7 @@ function SaleInvoice() {
                 placeholder="Discount %"
               />
             </div>
-            {GSTIN &&
+            {GSTIN && (
               <div>
                 <span className="percent-div"> GST% </span>
                 <input
@@ -609,71 +682,55 @@ function SaleInvoice() {
                   placeholder="gst%"
                 />
               </div>
-            }
+            )}
           </div>
-
         </div>
 
-        {addedItems.amount > 0 &&
+        {addedItems.amount > 0 && (
           <div className="d-flex justify-content-center mb-5">
             <Fab
               sx={{
                 width: "90%",
                 height: "40px",
                 display: "flex",
-                justifyContent: "space-between"
+                justifyContent: "space-between",
               }}
               onClick={addSaleItem}
-              variant="extended">
-              <div className="ms-4 fw-bold"> {addedItems.amount ? addedItems.amount : ''} </div>
+              variant="extended"
+            >
+              <div className="ms-4 fw-bold">
+                {" "}
+                {addedItems.amount ? addedItems.amount : ""}{" "}
+              </div>
               <div style={{ width: "33px" }}>
                 <img className="w-100" src={RightArrow} alt="" />
               </div>
-
             </Fab>
           </div>
-        }
+        )}
 
-        {/* add item list */}
-        <div ref={tableDiv} className="item-list-parent table-responsive">
-          <table className="table table-bordered caption-top text-center ">
-            <thead className="table-info">
-              <tr>
-                <th className="name-head" scope="col">
-                  Name
-                </th>
-                <th scope="col">Qyt.</th>
-                <th scope="col">Unit</th>
-                <th scope="col">Rate</th>
-                <th scope="col">Disc.%</th>
-                <th scope="col">Tax%</th>
-                <th scope="col">Rate</th>
-                <th className="sale_invoice_cut_item" scope="col"> </th>
-              </tr>
-            </thead>
-            <tbody className="tbody-txt">
-              {saleData.saleItem.map((item, index) => (
-                <tr className="position-relative tbody-txt" key={index}>
-                  <td>{item.name}</td>
-                  <td>{item.quantity}</td>
-                  <td>{item.unit}</td>
-                  <td>{item.salePrice}</td>
-                  <td>{item.disc === "" ? "0" : item.disc} %</td>
-                  <td>{item.gst === "" ? "0" : item.gst} %</td>
-                  <td>{item.amount}</td>
-                  <td className="sale_invoice_cut_item">
-                    {/* Add the delete button (X) and call handleDeleteItem with the item's index */}
-                    <button className="border border-light bg-danger text-light" onClick={() => handleDeleteItem(index)}>X</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="sale-itm-container">
+          {saleData.saleItem.map((item, index) => (
+            <div className="sale-itm-item" key={index} onClick={() => handleOpen(item)}>
+              <div className="sale-itm-name text-capitalize">{item.name}</div>
+              <div className="d-flex gap-4">
+                <div className="sale-itm-price">{item.amount}</div>
+                <button
+                  className="sale-itm-cut"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Stop the event propagation
+                    handleDeleteItem(index);
+                  }}
+                >
+                  X
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
 
         <div className="sale-invoice-footer">
           <div className="w-100 px-3">
-
             <div className="w-100">
               <select
                 onChange={inputChange}
@@ -692,7 +749,6 @@ function SaleInvoice() {
           </div>
 
           <div className="print-save mt-5">
-
             <div className="sub-total-shelter d-flex justify-content-between">
               <div>Sub-Total</div>
               <div>{total ? total : "0.00"}</div>
@@ -701,8 +757,6 @@ function SaleInvoice() {
               <div>GRAND TOTAL</div>
               <div>{grandTotal ? grandTotal.toFixed(0) : "0.00"}</div>
             </div>
-
-
           </div>
 
           <div className="text-center my-3">
@@ -711,22 +765,24 @@ function SaleInvoice() {
                 height: "40px",
                 margin: "10px 0",
                 width: "50%",
-                zIndex: "1"
+                zIndex: "1",
               }}
               onClick={savePrint}
-              variant="extended">
+              variant="extended"
+            >
               Save & Print
               <PrintIcon sx={{ ml: 1 }} />
-
             </Fab>
           </div>
-
         </div>
 
         <div className="sale-details">
-          <SaleDetails total={total} discountAmount={discountAmount} grandTotal={grandTotal} />
+          <SaleDetails
+            total={total}
+            discountAmount={discountAmount}
+            grandTotal={grandTotal}
+          />
         </div>
-
       </div>
     </>
   );

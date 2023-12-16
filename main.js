@@ -3,7 +3,7 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs');
 
-// const isDev = true;
+const isDev = true;
 
 function createWindow() {
   const { width, height } = screen.getPrimaryDisplay().size;

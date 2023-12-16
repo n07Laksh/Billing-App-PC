@@ -224,7 +224,7 @@ const Records = () => {
                               </div>
                               <div className="clent-pare">
                                 <div className="clent-tag">Quantity:</div>
-                                <div className="quote">{`${item.quantity} ${item.unit}`}</div>
+                                <div className="quote">{`${item.quantity} ${item.unit?item.unit:""}`}</div>
                               </div>
                               <div className="clent-pare">
                                 <div className="clent-tag">Discount:</div>

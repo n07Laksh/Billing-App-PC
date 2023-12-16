@@ -859,3 +859,41 @@ font-size: 15px;
   justify-content: space-between;
   gap: 10px;
 }
+
+.stock-item {
+  display: flex;
+  justify-content: space-between;
+}
+
+.clent-name {
+  width: 100%;
+  font-size: 22px;
+  font-weight: bolder;
+  color: #1a5d97;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+}
+
+.clent-quote {
+  font-size: 17px;
+  color: teal;
+  font-weight: bolder;
+}
+
+.quote {
+  font-size: 16px;
+  font-weight: bolder;
+  color: teal;
+}
+
+.clent-tag {
+  color: #254e77;
+}
+
+.edit-stock {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}

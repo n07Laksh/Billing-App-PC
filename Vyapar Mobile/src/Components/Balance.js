@@ -13,15 +13,12 @@ const Balance = () => {
   const [previousSale, setPreviousSale] = useState("00");
   const [previousMonthPurchase, setPreviousMonthPurchase] = useState("00");
 
-  // Create Dexie database
-  // const saleDB = new Dexie(`sale_${user.name}`);
-  const saleDB = new Dexie(`sale`);
+  const saleDB = new Dexie(`sale_${user.name}`);
   saleDB.version(4).stores({
     saleItems: "++id,today,clientName",
   });
 
   // const purchaseDB = new Dexie(`purchase_${user.name}`);
-  const purchaseDB = new Dexie(`purchase`);
   purchaseDB.version(4).stores({
     purchaseData: "++id,today", 
   });

@@ -14,7 +14,6 @@ import "react-toastify/dist/ReactToastify.css";
 
 function PurchaseInvoice() {
   const navigate = useNavigate();
-  const tableDiv = useRef(); // table parent div
   const user = JSON.parse(localStorage.getItem("userData"));
   const GSTIN = localStorage.getItem("GSTIN");
 
@@ -64,8 +63,6 @@ function PurchaseInvoice() {
 
     setTotal(newTotal);
     setGrandTotal(newTotal);
-
-    tableDiv.current.scrollTop = tableDiv.current.scrollHeight;
   }, [addedItems]);
 
   // calculate discount and auto fill for sale amount
@@ -211,14 +208,12 @@ function PurchaseInvoice() {
     }
   };
 
-  // const db = new Dexie(`purchase_${user.name}`);
-  const db = new Dexie(`purchase`);
+  const db = new Dexie(`purchase_${user.name}`);
   db.version(4).stores({
     purchaseData: "++id,today,billNum,supplierName,date",
   });
 
-  // const dailyPurchase = new Dexie(`dailyPurchase_${user.name}`);
-  const dailyPurchase = new Dexie(`dailyPurchase`);
+  const dailyPurchase = new Dexie(`dailyPurchase_${user.name}`);
   dailyPurchase.version(5).stores({
     purchases: "++id,today,supplierName",
   });
@@ -273,6 +268,8 @@ function PurchaseInvoice() {
         // Clear purchaseData after successful addition
         setPurchaseData((prevPurchaseData) => ({
           ...prevPurchaseData,
+          supplierName: "",
+          billNum:"",
           purchaseItem: [],
         }));
 
@@ -325,6 +322,14 @@ function PurchaseInvoice() {
     }));
   };
 
+  const [selectItem, setSelectItem] = useState(null);
+  const [open, setOpen] = React.useState(false);
+  const handleOpen = (itm) => {
+    setSelectItem(itm);
+    setOpen(true);
+  };
+  const handleClose = () => setOpen(false);
+
   return (
     <>
       <ToastContainer
@@ -339,6 +344,59 @@ function PurchaseInvoice() {
         pauseOnHover
         theme="dark"
       />
+
+      {selectItem && (
+        <div>
+          <Modal
+            open={open}
+            onClose={handleClose}
+            aria-labelledby="modal-modal-title"
+            aria-describedby="modal-modal-description"
+          >
+            <Box sx={style}>
+              <Typography id="modal-modal-title" variant="h6" component="h2">
+                <div className="">
+                  <div className="modal-itm-name text-capitalize">
+                    {selectItem.name}
+                  </div>
+                </div>
+              </Typography>
+              <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+                <div>
+                  <div className="modal-view-details">
+                    <div>Sale price</div>
+                    <div>{selectItem.salePrice}₹</div>
+                  </div>
+                  <div className="modal-view-details">
+                    <div>Quantity</div>
+                    <div>
+                      {selectItem.quantity} {selectItem.unit}
+                    </div>
+                  </div>
+                  <div className="modal-view-details">
+                    <div>Discount</div>
+                    <div>{selectItem.disc ? selectItem.disc + "%" : "0%"}</div>
+                  </div>
+                  <div className="modal-view-details">
+                    <div>GST</div>
+                    <div>{selectItem.gst ? selectItem.gst + "%" : "0%"}</div>
+                  </div>
+                  <div className="modal-view-details">
+                    <div>Date</div>
+                    <div>{selectItem.date}</div>
+                  </div>
+
+                  <div className="modal-view-details amt">
+                    <div>Amount</div>
+                    <div className="fw-bolder">{selectItem.amount}</div>
+                  </div>
+                </div>
+              </Typography>
+            </Box>
+          </Modal>
+        </div>
+      )}
+
       <div className="sale-content-parentdiv">
         <Paper
           sx={{
@@ -379,6 +437,7 @@ function PurchaseInvoice() {
               label="Supplier Name*"
               variant="standard"
               name="supplierName"
+              value={purchaseData.supplierName}
               onChange={inputChange}
               className="w-100"
               InputLabelProps={{
@@ -454,7 +513,6 @@ function PurchaseInvoice() {
                 value={addedItems.unit}
                 className="unit-select"
               >
-                <option value="NO">None</option>
                 <option value="BG">Bag (BG)</option>
                 <option value="BTL">Bottle (BTL)</option>
                 <option value="BX">Box (BX)</option>
@@ -567,50 +625,24 @@ function PurchaseInvoice() {
             </Fab>
           </div>
         )}
-
-        {/* div for spacing */}
-        <div className="d-block space-div "></div>
-
-        {/* add item list */}
-        <div ref={tableDiv} className="item-list-parent border">
-          <table className="table caption-top text-center ">
-            <thead className="table-info">
-              <tr>
-                <th className="name-head" scope="col">
-                  Name
-                </th>
-                <th scope="col">Qty.</th>
-                <th scope="col">Unit</th>
-                <th scope="col">Rate</th>
-                <th scope="col">Disc.%</th>
-                <th scope="col">Tax%</th>
-                <th scope="col">Rate</th>
-                <th scope="col"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {purchaseData.purchaseItem.map((item, index) => (
-                <tr className="position-relative" key={index}>
-                  <td>{item.name}</td>
-                  <td>{item.quantity}</td>
-                  <td>{item.unit}</td>
-                  <td>{item.purchasePrice}</td>
-                  <td>{item.disc === "" ? "0" : item.disc} %</td>
-                  <td>{item.gst === "" ? "0" : item.gst} %</td>
-                  <td>{item.amount}</td>
-                  <td>
-                    {/* Add the delete button (X) and call handleDeleteItem with the item's index */}
-                    <button
-                      className="border border-light bg-danger text-light"
-                      onClick={() => handleDeleteItem(index)}
-                    >
-                      X
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="sale-itm-container">
+          {purchaseData.purchaseItem.map((item, index) => (
+            <div className="sale-itm-item" key={index} onClick={() => handleOpen(item)}>
+              <div className="sale-itm-name text-capitalize">{item.name}</div>
+              <div className="d-flex gap-4">
+                <div className="sale-itm-price">{item.amount}</div>
+                <button
+                  className="sale-itm-cut"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Stop the event propagation
+                    handleDeleteItem(index);
+                  }}
+                >
+                  X
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
 
         <div className="sale-invoice-footer w-100">
